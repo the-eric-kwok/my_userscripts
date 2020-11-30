@@ -4,19 +4,94 @@
 // @version      1.0.1.0
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
-// @match        https://studyh5.zhihuishu.com/videoStudy*
+// @match        *://studyh5.zhihuishu.com/videoStudy*
 // @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
-// @grant        none
+// @require      https://greasyfork.org/scripts/28536-gm-config/code/GM_config.js?version=184529
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
 // @license      GPL
 // ==/UserScript==
 
 var timeInterval = 1000; //脚本循环检测时间间隔1000表示1秒
-var abnormalStuckDetectionLimit = 5; //异常卡顿检查，当异常卡顿检查连续5次发现到视频进度没有变化时刷新，-1禁用
+var abnormalStuckDetectionLimit = 10; //异常卡顿检查，当异常卡顿检查连续5次发现到视频进度没有变化时刷新，-1禁用
 
 var stuckCount = 0; //卡顿计数
 var lastProgressBar = ''; //进度条缓存
 
 var shotFlags = 0x0;
+
+var myConfig = {
+    'id': 'MyConfig', // The id used for this instance of GM_config
+    'title': '智慧树助手 - 设置', // Panel Title
+    'events':
+    {
+        'open': function (doc) {
+            // translate the buttons
+            var config = this;
+            doc.getElementById(config.id + '_saveBtn').textContent = "保存";
+            doc.getElementById(config.id + '_closeBtn').textContent = "关闭";
+            doc.getElementById(config.id + '_resetLink').textContent = "重置";
+        },
+    },
+    'fields': // Fields object
+    {
+        'gxk_enable':
+        {
+            'label': '在共享课上启用脚本',
+            'type': 'checkbox',
+            'default': true
+        },
+        'jmk_enable':
+        {
+            'label': '在见面课上启用脚本',
+            'type': 'checkbox',
+            'default': true
+        },
+        'copy_enable':
+        {
+            'label': '在章节测试解除复制封印',
+            'type': 'checkbox',
+            'default': true
+        },
+        'timeInterval': // This is the id of the field
+        {
+            'label': '检测时间间隔（秒）', // Appears next to field
+            'type': 'int', // Makes this setting a text field
+            'default': 1 // Default value if user doesn't change it
+        },
+        'abnormalStuckDetectionEnable':
+        {
+            'label': '异常卡顿自动刷新',
+            'type': 'checkbox',
+            'default': true
+        },
+        'abnormalStuckDetectionLimit':
+        {
+            'label': '异常卡顿超时时长（秒）',
+            'type': 'int',
+            'default': 10
+        },
+        'autoMute':
+        {
+            'label': '自动静音',
+            'type': 'checkbox',
+            'default': true
+        },
+        'auto15x':
+        {
+            'label': '自动切换1.5倍速',
+            'type': 'checkbox',
+            'default': true
+        },
+        'autoBQ':
+        {
+            'label': '自动切换标清',
+            'type': 'checkbox',
+            'default': true
+        }
+    }
+}
 
 function sleep(milliSeconds = 10) {
     //等待10ms
@@ -191,9 +266,24 @@ function mainLoop() {
     }
 }
 
+function config_button_inject() {
+    if ($(".newListTest").length > 0) {
+        console.log($(".newListTest"));
+        $(".newListTest").append('<li class="homeworkExam"><a onclick="onConfig();" id="myConfBtn"><em class="iconfont iconbaizhoumoshi-gengduo"></em><div>脚本设置</div></a></li>')
+        $("#myConfBtn").on("click", onConfig);
+    }
+}
+
+function onConfig() {
+    GM_config.open();
+}
+
 (function () {
     'use strict';
     window.onload = window.setInterval(mainLoop, timeInterval);
+    GM_config.init(myConfig);
+    //GM_config.open();
+    window.setTimeout(config_button_inject, 3000);
     console.log(date_time() + "[智慧树助手] 启动成功。");
 })();
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.2.0
+// @version      1.0.2.1
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -358,38 +358,40 @@ function mainLoop() {
 }
 
 function config_button_inject() {
-    if ($(".Patternbtn-div").length > 0) {
-        $(".Patternbtn-div").before([
-            '<div class="Patternbtn-div">',
-            '  <a id="myConfBtn">',
-            '    <svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">',
-            '      <path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF">',
-            '      </path>',
-            '    </svg>',
-            '    <p>脚本设置</p>',
-            '  </a>',
-            '</div>'].join('\n'));
-        $("#myConfBtn").on("click", onConfig);
-    }
+    if ($('#myConfBtn').length == 0) {
+        if ($(".Patternbtn-div").length > 0) {
+            $(".Patternbtn-div").before([
+                '<div class="Patternbtn-div">',
+                '  <a id="myConfBtn">',
+                '    <svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">',
+                '      <path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF">',
+                '      </path>',
+                '    </svg>',
+                '    <p>脚本设置</p>',
+                '  </a>',
+                '</div>'].join('\n'));
+            $("#myConfBtn").on("click", onConfig);
+        }
 
-    if ($("ul:has('.zhibo')").length > 0) {
-        $("ul:has('.zhibo')").children(":has('.zhibo.online-school')").before([
-            '<li>',
-            '  <a id="myConfBtn" class="zhibo">',
-            '  脚本设置',
-            '  </a>',
-            '<\li>'].join('\n'));
-        $("#myConfBtn").on("click", onConfig);
-    }
+        if ($("ul:has('.zhibo')").length > 0) {
+            $("ul:has('.zhibo')").children(":has('.zhibo.online-school')").before([
+                '<li>',
+                '  <a id="myConfBtn" class="zhibo" style="cursor: pointer;">',
+                '  脚本设置',
+                '  </a>',
+                '<\li>'].join('\n'));
+            $("#myConfBtn").on("click", onConfig);
+        }
 
-    if ($(".onlineSchool_link").length > 0) {
-        $(".onlineSchool_link").after([
-            '<div class="onlineSchool_link fr">',
-            '  <a id="myConfBtn">',
-            '  脚本设置',
-            '  </a>',
-            '</div>'].join('\n'));
-        $("#myConfBtn").on("click", onConfig);
+        if ($(".onlineSchool_link").length > 0) {
+            $(".onlineSchool_link").after([
+                '<div class="onlineSchool_link fr">',
+                '  <a id="myConfBtn" style="cursor: pointer;">',
+                '  脚本设置',
+                '  </a>',
+                '</div>'].join('\n'));
+            $("#myConfBtn").on("click", onConfig);
+        }
     }
 }
 
@@ -421,7 +423,7 @@ function onConfig() {
     autoBQ = GM_config.get("autoBQ");
     timeInterval = GM_config.get("timeInterval");
     abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
-    window.setTimeout(config_button_inject, 2000);
+    window.setInterval(config_button_inject, 2000);
     log("启动成功");
 })();
 

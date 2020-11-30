@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
-// @namespace    http://tampermonkey.net/
+// @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
 // @version      1.0.2.0
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
+// @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
+// @supportURL   https://github.com/the-eric-kwok/zhihuishu_reload/issues
 // @match        *://studyh5.zhihuishu.com/videoStudy*
 // @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
 // @match        *://lc.zhihuishu.com/live/vod_room.html*
@@ -27,6 +29,7 @@ var abnormalStuckDetectionLimit = 10;
 var stuckCount = 0; //卡顿计数
 var lastProgressBar = ''; //进度条缓存
 
+var myConfigState = false;
 var myConfig = {
     'id': 'MyConfig', // The id used for this instance of GM_config
     'title': '智慧树助手 - 设置', // Panel Title
@@ -80,6 +83,7 @@ var myConfig = {
     'events': {
         'save': function() {
             GM_config.close();
+            log("配置已保存");
         },
         'open': function (doc) {
             // translate the buttons
@@ -89,23 +93,30 @@ var myConfig = {
             doc.getElementById(config.id + '_resetLink').textContent = "重置";
             // 更改设置页面的宽度为屏幕的50%
             $('iframe#'+config.id).css({
-                'width': '40%',
-                'left': (screen.width/10*3)+'px',
+                'width': '400px',
+                'left': (screen.width - 450)+'px',
                 'height': '450px',
-                'top': (screen.height/10*2)+'px',
+                'top': '80px',
                 'box-shadow': '0px 0px 15px grey',
                 'border': '0px',
                 'border-radius': '5px',
-                'background': '#FFFFFF',
-                'padding': '0 20px'
+                'background': '#F9F9F9',
+                //'padding': '0 20px'
             });
+            myConfigState = true;
         },
+        'close': function(doc) {
+            myConfigState = false;
+        }
     },
     'css': [
+        '#MyConfig { background: #F9F9F9; }',
+        '#MyConfig .saveclose_buttons { font-size: 14px; background: #3d84ff; border-radius: 14px; line-height: 24px; width: 82px; height: 28px; color: #FFF; border: none; cursor: pointer; }',
         '#MyConfig .field_label { font-size: 14px; font-weight: bold; margin-right: 6px; }',
         '#MyConfig .radio_label { font-size: 14px; }',
         "#MyConfig .config_header { margin: 20px; }",
-        '#MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 80px; }',
+        '#MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 75px; }',
+        '#MyConfig_wrapper { padding: 0 20px }',
     ].join('\n') + '\n'
 }
 
@@ -348,42 +359,46 @@ function mainLoop() {
 
 function config_button_inject() {
     if ($(".Patternbtn-div").length > 0) {
-        $(".Patternbtn-div").before('\
-<div class="Patternbtn-div">\
-<a id="myConfBtn">\
-<svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">\
-<path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF">\
-</path>\
-</svg>\
-<p>脚本设置</p>\
-</a>\
-</div>');
+        $(".Patternbtn-div").before([
+            '<div class="Patternbtn-div">',
+            '  <a id="myConfBtn">',
+            '    <svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">',
+            '      <path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF">',
+            '      </path>',
+            '    </svg>',
+            '    <p>脚本设置</p>',
+            '  </a>',
+            '</div>'].join('\n'));
         $("#myConfBtn").on("click", onConfig);
     }
 
     if ($("ul:has('.zhibo')").length > 0) {
-        $(".useImg").before('\
-<li>\
-<a id="myConfBtn" class="zhibo">\
-脚本设置\
-</a>\
-<\li>');
+        $("ul:has('.zhibo')").children(":has('.zhibo.online-school')").before([
+            '<li>',
+            '  <a id="myConfBtn" class="zhibo">',
+            '  脚本设置',
+            '  </a>',
+            '<\li>'].join('\n'));
         $("#myConfBtn").on("click", onConfig);
     }
 
     if ($(".onlineSchool_link").length > 0) {
-        $(".onlineSchool_link").after('\
-<div class="onlineSchool_link fr">\
-<a id="myConfBtn">\
-脚本设置\
-</a>\
-</div>');
+        $(".onlineSchool_link").after([
+            '<div class="onlineSchool_link fr">',
+            '  <a id="myConfBtn">',
+            '  脚本设置',
+            '  </a>',
+            '</div>'].join('\n'));
         $("#myConfBtn").on("click", onConfig);
     }
 }
 
 function onConfig() {
-    GM_config.open();
+    if (!myConfigState){
+        GM_config.open();
+    } else {
+        GM_config.save();
+    }
 }
 
 

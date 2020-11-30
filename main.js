@@ -26,78 +26,87 @@ var abnormalStuckDetectionLimit = 10;
 
 var stuckCount = 0; //卡顿计数
 var lastProgressBar = ''; //进度条缓存
-var shotFlags = 0x0;
 
 var myConfig = {
     'id': 'MyConfig', // The id used for this instance of GM_config
     'title': '智慧树助手 - 设置', // Panel Title
-    'events':
-    {
-        'open': function (doc) {
-            // translate the buttons
-            var config = this;
-            doc.getElementById(config.id + '_saveBtn').textContent = "保存";
-            doc.getElementById(config.id + '_closeBtn').textContent = "关闭";
-            doc.getElementById(config.id + '_resetLink').textContent = "重置";
-        },
-    },
-    'fields': // Fields object
-    {
-        'gxkEnable':
-        {
+    'fields': {
+        'gxkEnable': {
             'label': '在共享课上启用脚本',
             'type': 'checkbox',
             'default': true
         },
-        'jmkEnable':
-        {
+        'jmkEnable': {
             'label': '在见面课上启用脚本',
             'type': 'checkbox',
             'default': true
         },
-        'copyEnable':
-        {
+        'copyEnable': {
             'label': '在章节测试解除复制封印',
             'type': 'checkbox',
             'default': true
         },
-        'timeInterval': // This is the id of the field
-        {
+        'timeInterval': {
             'label': '检测时间间隔（秒）', // Appears next to field
             'type': 'int', // Makes this setting a text field
             'default': 1 // Default value if user doesn't change it
         },
-        'abnormalStuckDetectionEnable':
-        {
-            'label': '异常卡顿自动刷新',
+        'abnormalStuckDetectionEnable': {
+            'label': '异常卡顿自动刷新（只适用于共享课）',
             'type': 'checkbox',
             'default': true
         },
-        'abnormalStuckDetectionLimit':
-        {
+        'abnormalStuckDetectionLimit': {
             'label': '异常卡顿超时时长（秒）',
             'type': 'int',
             'default': 10
         },
-        'autoMute':
-        {
+        'autoMute': {
             'label': '自动静音',
             'type': 'checkbox',
             'default': true
         },
-        'auto15x':
-        {
+        'auto15x': {
             'label': '自动切换1.5倍速',
             'type': 'checkbox',
             'default': true
         },
-        'autoBQ':
-        {
+        'autoBQ': {
             'label': '自动切换标清',
             'type': 'checkbox',
             'default': true
         }
-    }
+    },
+    'events': {
+        'save': function() {
+            GM_config.close();
+        },
+        'open': function (doc) {
+            // translate the buttons
+            var config = this;
+            doc.getElementById(config.id + '_saveBtn').textContent = "确定";
+            doc.getElementById(config.id + '_closeBtn').textContent = "取消";
+            doc.getElementById(config.id + '_resetLink').textContent = "重置";
+            // 更改设置页面的宽度为屏幕的50%
+            $('iframe#'+config.id).css({
+                'width': '40%',
+                'left': (screen.width/10*3)+'px',
+                'height': '450px',
+                'top': (screen.height/10*2)+'px',
+                'box-shadow': '0px 0px 15px grey',
+                'border': '0px',
+                'border-radius': '5px',
+                'background': '#FFFFFF',
+                'padding': '0 20px'
+            });
+        },
+    },
+    'css': [
+        '#MyConfig .field_label { font-size: 14px; font-weight: bold; margin-right: 6px; }',
+        '#MyConfig .radio_label { font-size: 14px; }',
+        "#MyConfig .config_header { margin: 20px; }",
+        '#MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 80px; }',
+    ].join('\n') + '\n'
 }
 
 function sleep(milliSeconds = 10) {
@@ -137,7 +146,6 @@ function gxk_get_not_played() {
         "[未完成检测] 更新未看列表，还剩" + video_labels.length + "个视频未完成。\n",
         {"点击展开全部": video_labels}
     );
-    console.log(video_labels);
     return video_labels;
 }
 
@@ -152,13 +160,11 @@ function jmk_get_not_played() {
             }
         })
     }
-    console.log(video_labels);
     return (video_labels);
 }
 
-function one_shot() {
-    // 只在网页加载后执行一次的功能
-    if ($("video").length > 0 && $("video")[0].playbackRate != 1.5 && !(shotFlags & 0x1) && auto15x) {
+function autoSwitch15x() {
+    if ($("video").length > 0 && $("video")[0].playbackRate != 1.5 && auto15x) {
         log('切换到1.5倍');
         if ($(".speedTab15").length > 0){
             $(".speedTab15")[0].click();
@@ -166,23 +172,24 @@ function one_shot() {
         if ($(".speedTab.speedTab15").length > 0){
             $(".speedTab.speedTab15")[0].click();
         }
-        shotFlags |= 0x1;
     }
+}
 
-    if ($("video")[0].volume > 0 && !(shotFlags & 0x2) && autoMute) {
+function autoSwitchBQ() {
+    if($(".definiLines .active")[0].className === "line1gq switchLine active" && autoBQ) {
+        log('切换到标清');
+        if ($(".line1bq.switchLine").length > 0) {
+            $(".line1bq.switchLine")[0].click();
+        }
+    }
+}
+
+function autoSwitchMute() {
+    if ($("video")[0].volume > 0 && autoMute) {
         log('自动静音');
         if ($(".volumeIcon").length > 0) {
             $(".volumeIcon")[0].click();
         }
-        shotFlags |= 0x2;
-    }
-
-    if($(".definiLines .active")[0].className === "line1gq switchLine active" && !(shotFlags & 0x4) && autoBQ) {
-       log('切换到标清');
-        if ($(".line1bq.switchLine").length > 0) {
-            $(".line1bq.switchLine")[0].click();
-        }
-        shotFlags |= 0x4;
     }
 }
 
@@ -243,7 +250,6 @@ function progressBarMonitor() {
         var ProgressBar = progress_bar.children('.currentTime').text();
         if ((ProgressBar !== '00:00:00') && (ProgressBar.slice(0,-3) === progress_bar.children('.duration').text().slice(0,-3))) {
             log("[进度条] 检测到进度条已满。");
-            shotFlags = 0x0; //切换视频的时候重置one_shot函数的flag
             var next_video = null;
             if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1){
                 next_video = $(gxk_get_not_played()[0]);
@@ -306,13 +312,23 @@ function copyEnabler() {
 }
 
 function mainLoop() {
+    gxkEnable = GM_config.get("gxkEnable");
+    jmkEnable = GM_config.get("jmkEnable");
+    copyEnable = GM_config.get("copyEnable");
+    autoMute = GM_config.get("autoMute");
+    auto15x = GM_config.get("auto15x");
+    autoBQ = GM_config.get("autoBQ");
+    timeInterval = GM_config.get("timeInterval");
+    abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
     if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && copyEnable){
         //测试题
         copyEnabler();
     }
     else if(window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable){
         //共享课
-        one_shot();
+        autoSwitch15x();
+        autoSwitchBQ();
+        autoSwitchMute();
         closeTips();
         closePopUpTest();
         progressBarMonitor();
@@ -321,7 +337,9 @@ function mainLoop() {
     }
     else if(window.location.href.indexOf("lc.zhihuishu.com") !== -1 && jmkEnable) {
         //见面课
-        one_shot();
+        autoSwitch15x();
+        autoSwitchBQ();
+        autoSwitchMute();
         closeTips();
         pauseDetector();
         progressBarMonitor();
@@ -329,23 +347,21 @@ function mainLoop() {
 }
 
 function config_button_inject() {
-    if ($(".newListTest").length > 0) {
-        console.log($(".newListTest"));
-        $(".newListTest").append('\
-<li class="homeworkExam">\
+    if ($(".Patternbtn-div").length > 0) {
+        $(".Patternbtn-div").before('\
+<div class="Patternbtn-div">\
 <a id="myConfBtn">\
 <svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">\
-<path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#3d84ff">\
+<path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF">\
 </path>\
 </svg>\
-<div>脚本设置</div>\
+<p>脚本设置</p>\
 </a>\
-</li>');
+</div>');
         $("#myConfBtn").on("click", onConfig);
     }
 
     if ($("ul:has('.zhibo')").length > 0) {
-        console.log($("ul:has('.zhibo')"));
         $(".useImg").before('\
 <li>\
 <a id="myConfBtn" class="zhibo">\
@@ -354,17 +370,29 @@ function config_button_inject() {
 <\li>');
         $("#myConfBtn").on("click", onConfig);
     }
+
+    if ($(".onlineSchool_link").length > 0) {
+        $(".onlineSchool_link").after('\
+<div class="onlineSchool_link fr">\
+<a id="myConfBtn">\
+脚本设置\
+</a>\
+</div>');
+        $("#myConfBtn").on("click", onConfig);
+    }
 }
 
 function onConfig() {
     GM_config.open();
 }
 
+
+
 (function () {
     'use strict';
     window.setTimeout(function() {
         var explorer = window.navigator.userAgent;
-        if(explorer.indexOf("Safari") >= 0){
+        if(explorer.indexOf("Safari") >= 0 && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
             alert("由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能。");
         }
     }, 3000)
@@ -378,7 +406,7 @@ function onConfig() {
     autoBQ = GM_config.get("autoBQ");
     timeInterval = GM_config.get("timeInterval");
     abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
-    window.setTimeout(config_button_inject, 3000);
+    window.setTimeout(config_button_inject, 2000);
     log("启动成功");
 })();
 

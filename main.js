@@ -15,15 +15,14 @@
 // @license      GPL
 // ==/UserScript==
 
-/* ============配置区域============ */
-var gxk_enable = 1; //共享课是否启用本脚本，1为开启，0为关闭
-var jmk_enable = 1; //见面课是否启用本脚本，1为开启，0为关闭
-var auto_mute = 1;  //是否自动静音，1为开启，0为关闭
-var auto_15x = 1;   //是否自动开启1.5倍率，1为开启，0为关闭
-var auto_bq = 1;    //是否自动开启标清，1为开启，0为关闭
-var timeInterval = 1000; //脚本循环检测时间间隔1000表示1秒
-var abnormalStuckDetectionLimit = 10; //异常卡顿检查，当异常卡顿检查连续5次发现到视频进度没有变化时刷新，-1禁用
-/* ==========配置区域结束=========== */
+var gxkEnable = true;
+var jmkEnable = true;
+var copyEnable = true;
+var autoMute = true;
+var auto15x = true;
+var autoBQ = true;
+var timeInterval = 1;
+var abnormalStuckDetectionLimit = 10;
 
 var stuckCount = 0; //卡顿计数
 var lastProgressBar = ''; //进度条缓存
@@ -44,19 +43,19 @@ var myConfig = {
     },
     'fields': // Fields object
     {
-        'gxk_enable':
+        'gxkEnable':
         {
             'label': '在共享课上启用脚本',
             'type': 'checkbox',
             'default': true
         },
-        'jmk_enable':
+        'jmkEnable':
         {
             'label': '在见面课上启用脚本',
             'type': 'checkbox',
             'default': true
         },
-        'copy_enable':
+        'copyEnable':
         {
             'label': '在章节测试解除复制封印',
             'type': 'checkbox',
@@ -159,7 +158,7 @@ function jmk_get_not_played() {
 
 function one_shot() {
     // 只在网页加载后执行一次的功能
-    if ($("video").length > 0 && $("video")[0].playbackRate != 1.5 && !(shotFlags & 0x1) && auto_15x) {
+    if ($("video").length > 0 && $("video")[0].playbackRate != 1.5 && !(shotFlags & 0x1) && auto15x) {
         log('切换到1.5倍');
         if ($(".speedTab15").length > 0){
             $(".speedTab15")[0].click();
@@ -170,7 +169,7 @@ function one_shot() {
         shotFlags |= 0x1;
     }
 
-    if ($("video")[0].volume > 0 && !(shotFlags & 0x2) && auto_mute) {
+    if ($("video")[0].volume > 0 && !(shotFlags & 0x2) && autoMute) {
         log('自动静音');
         if ($(".volumeIcon").length > 0) {
             $(".volumeIcon")[0].click();
@@ -178,7 +177,7 @@ function one_shot() {
         shotFlags |= 0x2;
     }
 
-    if($(".definiLines .active")[0].className === "line1gq switchLine active" && !(shotFlags & 0x4) && auto_bq) {
+    if($(".definiLines .active")[0].className === "line1gq switchLine active" && !(shotFlags & 0x4) && autoBQ) {
        log('切换到标清');
         if ($(".line1bq.switchLine").length > 0) {
             $(".line1bq.switchLine")[0].click();
@@ -307,11 +306,11 @@ function copyEnabler() {
 }
 
 function mainLoop() {
-    if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1){
+    if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && copyEnable){
         //测试题
         copyEnabler();
     }
-    else if(window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxk_enable == 1){
+    else if(window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable){
         //共享课
         one_shot();
         closeTips();
@@ -320,7 +319,7 @@ function mainLoop() {
         pauseDetector();
         stuckDetector();
     }
-    else if(window.location.href.indexOf("lc.zhihuishu.com") !== -1 && jmk_enable == 1) {
+    else if(window.location.href.indexOf("lc.zhihuishu.com") !== -1 && jmkEnable) {
         //见面课
         one_shot();
         closeTips();
@@ -369,8 +368,16 @@ function onConfig() {
             alert("由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能。");
         }
     }, 3000)
-    window.onload = window.setInterval(mainLoop, timeInterval);
+    window.onload = window.setInterval(mainLoop, (timeInterval*1000));
     GM_config.init(myConfig);
+    gxkEnable = GM_config.get("gxkEnable");
+    jmkEnable = GM_config.get("jmkEnable");
+    copyEnable = GM_config.get("copyEnable");
+    autoMute = GM_config.get("autoMute");
+    auto15x = GM_config.get("auto15x");
+    autoBQ = GM_config.get("autoBQ");
+    timeInterval = GM_config.get("timeInterval");
+    abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
     window.setTimeout(config_button_inject, 3000);
     log("启动成功");
 })();

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.2.1
+// @version      1.0.2.2
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -118,6 +118,24 @@ var myConfig = {
         '#MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 75px; }',
         '#MyConfig_wrapper { padding: 0 20px }',
     ].join('\n') + '\n'
+}
+
+function explorer() {
+    if(navigator.userAgent.indexOf("Opera") > -1) {
+        return 'Opera';
+    }
+    else if (navigator.userAgent.indexOf("Firefox") > -1) {
+        return 'Firefox';
+    }
+    else if (navigator.userAgent.indexOf("Chrome") > -1){
+        return 'Chrome';
+    }
+    else if(navigator.userAgent.indexOf("Safari") > -1) {
+        return 'Safari';
+    }
+    else if (navigator.userAgent.indexOf("compatible") > -1 && navigator.userAgent.indexOf("MSIE") > -1 && !(navigator.userAgent.indexOf("Opera") > -1)) {
+        return "IE";
+    }
 }
 
 function sleep(milliSeconds = 10) {
@@ -323,37 +341,43 @@ function copyEnabler() {
 }
 
 function mainLoop() {
-    gxkEnable = GM_config.get("gxkEnable");
-    jmkEnable = GM_config.get("jmkEnable");
-    copyEnable = GM_config.get("copyEnable");
-    autoMute = GM_config.get("autoMute");
-    auto15x = GM_config.get("auto15x");
-    autoBQ = GM_config.get("autoBQ");
-    timeInterval = GM_config.get("timeInterval");
-    abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
-    if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && copyEnable){
-        //测试题
-        copyEnabler();
+    try {
+        gxkEnable = GM_config.get("gxkEnable");
+        jmkEnable = GM_config.get("jmkEnable");
+        copyEnable = GM_config.get("copyEnable");
+        autoMute = GM_config.get("autoMute");
+        auto15x = GM_config.get("auto15x");
+        autoBQ = GM_config.get("autoBQ");
+        timeInterval = GM_config.get("timeInterval");
+        abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
+        config_button_inject();
+        if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && copyEnable){
+            //测试题
+            copyEnabler();
+        }
+        else if(window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable){
+            //共享课
+            autoSwitch15x();
+            autoSwitchBQ();
+            autoSwitchMute();
+            closeTips();
+            closePopUpTest();
+            progressBarMonitor();
+            pauseDetector();
+            stuckDetector();
+        }
+        else if(window.location.href.indexOf("lc.zhihuishu.com") !== -1 && jmkEnable) {
+            //见面课
+            autoSwitch15x();
+            autoSwitchBQ();
+            autoSwitchMute();
+            closeTips();
+            pauseDetector();
+            progressBarMonitor();
+        }
     }
-    else if(window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable){
-        //共享课
-        autoSwitch15x();
-        autoSwitchBQ();
-        autoSwitchMute();
-        closeTips();
-        closePopUpTest();
-        progressBarMonitor();
-        pauseDetector();
-        stuckDetector();
-    }
-    else if(window.location.href.indexOf("lc.zhihuishu.com") !== -1 && jmkEnable) {
-        //见面课
-        autoSwitch15x();
-        autoSwitchBQ();
-        autoSwitchMute();
-        closeTips();
-        pauseDetector();
-        progressBarMonitor();
+    catch (err) {
+        console.log(date_time(), err.message);
     }
 }
 
@@ -407,12 +431,11 @@ function onConfig() {
 
 (function () {
     'use strict';
-    window.setTimeout(function() {
-        var explorer = window.navigator.userAgent;
-        if(explorer.indexOf("Safari") >= 0 && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
+    if(explorer() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
+        window.setTimeout(function() {
             alert("由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能。");
-        }
-    }, 3000)
+        }, 3000);
+    }
     window.onload = window.setInterval(mainLoop, (timeInterval*1000));
     GM_config.init(myConfig);
     gxkEnable = GM_config.get("gxkEnable");
@@ -423,7 +446,6 @@ function onConfig() {
     autoBQ = GM_config.get("autoBQ");
     timeInterval = GM_config.get("timeInterval");
     abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
-    window.setInterval(config_button_inject, 2000);
     log("启动成功");
 })();
 

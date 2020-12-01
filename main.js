@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.2.4
+// @version      1.0.2.5
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -118,6 +118,14 @@ var myConfig = {
         '#MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 75px; }',
         '#MyConfig_wrapper { padding: 0 20px }',
     ].join('\n') + '\n'
+}
+
+window.onresize = function(){
+    // 监听窗口大小改变
+    if($("iframe#MyConfig").css('left') !== undefined) {
+        $("iframe#MyConfig").css('left', (document.body.clientWidth-450) + 'px');
+    }
+
 }
 
 function explorer() {

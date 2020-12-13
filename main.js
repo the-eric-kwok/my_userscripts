@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.3.0
+// @version      1.0.3.2
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -156,6 +156,8 @@ function explorer() {
 
 
 function sleep(ms = 10){
+    // 异步等待，只阻塞当前脚本调用处函数，不阻塞整个浏览器
+    // 调用方法：await sleep() 或 await sleep (1000)
     return new Promise(function (resolve, reject) {
         setTimeout(()=>{
             resolve();
@@ -377,10 +379,50 @@ function autoCopy() {
 
 }
 
-async function oneShot() {
+var dialog_number = 0
+function showDialog(msg) {
+    // 显示提示信息弹窗
+    console.log('showDialog', dialog_number, msg);
+    if (!dialog_number)
+        dialog_number = 0;
+    else
+        dialog_number++;
+    $('#app').before('<div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">'+
+                     '  <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog'+dialog_number+'">'+
+                     '    <div class="el-dialog__header">'+
+                     '      <span class="el-dialog__title">✅智慧树助手提示您</span>'+
+                     '      <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton'+dialog_number+'">'+
+                     '        <i class="el-dialog__close el-icon el-icon-close"></i>'+
+                     '      </button>'+
+                     '    </div>'+
+                     '    <div class="el-dialog__body">'+
+                     '      <div class="operate-dialog-1" id="DialogContent'+dialog_number+'">'+
+                     '        <p>'+msg+'</p>'+
+                     '      </div> '+
+                     '    </div>'+
+                     '    <div class="el-dialog__footer">'+
+                     '      <span class="dialog-footer">'+
+                     '        <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton'+dialog_number+'">'+
+                     '          <span>我知道了</span>'+
+                     '        </button>'+
+                     '      </span>'+
+                     '    </div>'+
+                     '  </div>'+
+                     '</div>'
+                    );
+    $('#Dialog'+dialog_number).css('width', '400px')
+    $('#DialogContent'+dialog_number).css("margin", "0 20px");
+    function closeOneClickCopyDialog() {
+        $('.dialog-tips').remove()
+    }
+    $('#DialogCloseButton'+dialog_number).on('click', closeOneClickCopyDialog);
+    $('#DialogConfirmButton'+dialog_number).on('click', closeOneClickCopyDialog);
+}
+
+function oneShot() {
     if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && autoCopyEnable){
         //测试题
-        alert('点击题目的话会自动复制到剪贴板噢～');
+        setTimeout(showDialog, 1000, '点击题目可以一键复制噢～');
         var autocp = setInterval(function() {
             if ($('.subject_describe').length > 0) {
                 autoCopy();
@@ -390,10 +432,9 @@ async function oneShot() {
         }, 1000);
     }
     if(explorer() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
-        window.setTimeout(function() {
-            alert("由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能。");
-        }, 3000);
+        window.setTimeout(showDialog, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
     }
+
 }
 
 function mainLoop() {
@@ -485,8 +526,6 @@ function onConfig() {
     }
 }
 
-
-
 (function () {
     'use strict';
     window.onload = window.setInterval(mainLoop, (timeInterval*1000));
@@ -503,5 +542,4 @@ function onConfig() {
     oneShot();
     log("启动成功");
 })();
-
 

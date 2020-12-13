@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.2.5
+// @version      1.0.3.0
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -13,6 +13,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
+// @grant        GM_setClipboard
 // @run-at       document-end
 // @license      GPL
 // ==/UserScript==
@@ -23,6 +24,7 @@ var copyEnable = true;
 var autoMute = true;
 var auto15x = true;
 var autoBQ = true;
+var autoCopyEnable = true;
 var timeInterval = 1;
 var abnormalStuckDetectionLimit = 10;
 
@@ -45,7 +47,12 @@ var myConfig = {
             'default': true
         },
         'copyEnable': {
-            'label': '在章节测试解除复制封印',
+            'label': '在章节测试/考试中解除复制封印',
+            'type': 'checkbox',
+            'default': true
+        },
+        'autoCopyEnable': {
+            'label': '在章节测试/考试中点击题目自动复制',
             'type': 'checkbox',
             'default': true
         },
@@ -84,9 +91,10 @@ var myConfig = {
         'save': function() {
             GM_config.close();
             log("配置已保存");
+            location.reload(); // 刷新页面
         },
         'open': function (doc) {
-            // translate the buttons
+            // 翻译按钮文本
             var config = this;
             doc.getElementById(config.id + '_saveBtn').textContent = "确定";
             doc.getElementById(config.id + '_closeBtn').textContent = "取消";
@@ -146,11 +154,13 @@ function explorer() {
     }
 }
 
-function sleep(milliSeconds = 10) {
-    //等待10ms
-    var startTime = new Date().getTime();
-    while (new Date().getTime() < startTime + milliSeconds) {
-    }
+
+function sleep(ms = 10){
+    return new Promise(function (resolve, reject) {
+        setTimeout(()=>{
+            resolve();
+        },ms);
+    })
 }
 
 function date_time() {
@@ -248,7 +258,7 @@ function closeTips() {
     }
 }
 
-function closePopUpTest() {
+async function closePopUpTest() {
     /*弹题测验*/
     var pop_up = $('.dialog-test');
     if (pop_up.length > 0) {
@@ -256,7 +266,7 @@ function closePopUpTest() {
         var topic_item = $('.topic-item');
         var guess_answer = parseInt(Math.random() * topic_item.length);
         topic_item[guess_answer].click();
-        sleep();
+        await sleep();
         var guess_char = 'ABCD'[guess_answer];
         //随机点击一个选项
         var answer = $('.answer').children().text();
@@ -352,6 +362,40 @@ function copyEnabler() {
     }
 }
 
+function autoCopy() {
+    // 点击题目自动复制
+    function _autoCopy() {
+        console.log($(this).text());
+        GM_setClipboard($(this).text());
+        $(this).css("background-color", "#ECECEC");
+        setTimeout(function(elem){
+            elem.css("background-color", "#FFFFFF");
+        }, 400, $(this));
+    }
+    $('.subject_describe').on("click", _autoCopy);
+    $('.smallStem_describe').on("click", _autoCopy);
+
+}
+
+async function oneShot() {
+    if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && autoCopyEnable){
+        //测试题
+        alert('点击题目的话会自动复制到剪贴板噢～');
+        var autocp = setInterval(function() {
+            if ($('.subject_describe').length > 0) {
+                autoCopy();
+                console.log('自动复制已启用');
+                clearInterval(autocp);
+            }
+        }, 1000);
+    }
+    if(explorer() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
+        window.setTimeout(function() {
+            alert("由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能。");
+        }, 3000);
+    }
+}
+
 function mainLoop() {
     try {
         gxkEnable = GM_config.get("gxkEnable");
@@ -360,6 +404,7 @@ function mainLoop() {
         autoMute = GM_config.get("autoMute");
         auto15x = GM_config.get("auto15x");
         autoBQ = GM_config.get("autoBQ");
+        autoCopyEnable = GM_config.get("autoCopyEnable");
         timeInterval = GM_config.get("timeInterval");
         abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
         config_button_inject();
@@ -432,6 +477,7 @@ function config_button_inject() {
 }
 
 function onConfig() {
+    // 点击“脚本设置”按钮时
     if (!myConfigState){
         GM_config.open();
     } else {
@@ -443,11 +489,6 @@ function onConfig() {
 
 (function () {
     'use strict';
-    if(explorer() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
-        window.setTimeout(function() {
-            alert("由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能。");
-        }, 3000);
-    }
     window.onload = window.setInterval(mainLoop, (timeInterval*1000));
     GM_config.init(myConfig);
     gxkEnable = GM_config.get("gxkEnable");
@@ -456,8 +497,11 @@ function onConfig() {
     autoMute = GM_config.get("autoMute");
     auto15x = GM_config.get("auto15x");
     autoBQ = GM_config.get("autoBQ");
+    autoCopyEnable = GM_config.get("autoCopyEnable");
     timeInterval = GM_config.get("timeInterval");
     abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
+    oneShot();
     log("启动成功");
 })();
+
 

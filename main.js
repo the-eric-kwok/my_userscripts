@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.3.2
+// @version      1.0.3.3
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -412,11 +412,11 @@ function showDialog(msg) {
                     );
     $('#Dialog'+dialog_number).css('width', '400px')
     $('#DialogContent'+dialog_number).css("margin", "0 20px");
-    function closeOneClickCopyDialog() {
+    function closeDialog() {
         $('.dialog-tips').remove()
     }
-    $('#DialogCloseButton'+dialog_number).on('click', closeOneClickCopyDialog);
-    $('#DialogConfirmButton'+dialog_number).on('click', closeOneClickCopyDialog);
+    $('#DialogCloseButton'+dialog_number).on('click', closeDialog);
+    $('#DialogConfirmButton'+dialog_number).on('click', closeDialog);
 }
 
 function oneShot() {

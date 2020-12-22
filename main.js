@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.3.3
+// @version      1.0.3.4
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频,使用时请注意您的网址因为它只能在https://studyh5.zhihuishu.com/videoStudy*上运行
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -24,9 +24,11 @@ var copyEnable = true;
 var autoMute = true;
 var auto15x = true;
 var autoBQ = true;
+var pauseResume = true;
 var autoCopyEnable = true;
 var timeInterval = 1;
 var abnormalStuckDetectionLimit = 10;
+var autoPlayNext = true;
 
 var stuckCount = 0; //卡顿计数
 var lastProgressBar = ''; //进度条缓存
@@ -71,6 +73,11 @@ var myConfig = {
             'type': 'int',
             'default': 10
         },
+        'pauseResume': {
+            'label': '暂停自动恢复播放',
+            'type': 'checkbox',
+            'default': true
+        },
         'autoMute': {
             'label': '自动静音',
             'type': 'checkbox',
@@ -85,7 +92,12 @@ var myConfig = {
             'label': '自动切换标清',
             'type': 'checkbox',
             'default': true
-        }
+        },
+        'autoPlayNext': {
+            'label': '自动播放下一集',
+            'type': 'checkbox',
+            'default': true
+        },
     },
     'events': {
         'save': function() {
@@ -177,21 +189,17 @@ function log(message) {
 function gxk_get_not_played() {
     //共享课获取未观看列表
     var video_labels = [];
-    var list = $('ul.list');
+    var list = $('.clearfix.video');
     if (list.length > 0) {
-        list.each(function (ul_index, ul_ele) { //章节
-            $(ul_ele).children().each(function (div_index, div_ele) { // x.x
-                $(div_ele).children('li').each(function (video_label_index, video_label_ele) { // x.x.x
-                    if ($(video_label_ele).find('b.fl.time_icofinish').length === 0) {
-                        if (!$(video_label_ele).hasClass('current_play')){ // 排除当前播放
-                            video_labels.push(video_label_ele);
-                        }
-                    }
-                });
-            });
+        list.each(function (index, elem) {
+            if ($(elem).find('.time_icofinish').length < 1) {
+                if (!$(elem).hasClass('current_play')) {
+                    video_labels.push(elem);
+                }
+            }
         });
     }
-    log(
+    console.log(
         "[未完成检测] 更新未看列表，还剩" + video_labels.length + "个视频未完成。\n",
         {"点击展开全部": video_labels}
     );
@@ -299,9 +307,9 @@ function progressBarMonitor() {
     var progress_bar = $('.nPlayTime');
     //监控进度条
     // console.log(progress_bar.children);
-    if (progress_bar.children().length > 0) {
+    if (progress_bar.children().length > 0 && autoPlayNext) {
         var ProgressBar = progress_bar.children('.currentTime').text();
-        if ((ProgressBar !== '00:00:00') && (ProgressBar.slice(0,-3) === progress_bar.children('.duration').text().slice(0,-3))) {
+        if ((ProgressBar !== '00:00:00') && (ProgressBar === progress_bar.children('.duration').text())) {
             log("[进度条] 检测到进度条已满。");
             var next_video = null;
             if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1){
@@ -318,12 +326,14 @@ function progressBarMonitor() {
 
 function pauseDetector() {
     /*暂停检测*/
-    var play_Button = $(".playButton");
-    if (play_Button.length > 0) {
-        //点击暂停按钮，将继续播放视频
-        play_Button.click();
-        log("[暂停检测] 继续播放。");
-        // play_Button.children[0].click();
+    if (pauseResume) {
+        var play_Button = $(".playButton");
+        if (play_Button.length > 0) {
+            //点击暂停按钮，将继续播放视频
+            play_Button.click();
+            log("[暂停检测] 继续播放。");
+            // play_Button.children[0].click();
+        }
     }
 }
 
@@ -331,7 +341,7 @@ function stuckDetector() {
     /*卡顿检测*/
     var progress_bar = $('.nPlayTime');
     var ProgressBar = progress_bar.children('.currentTime').text();
-    if ($("video").length > 0 && progress_bar.children().length > 0 && abnormalStuckDetectionLimit > 0) {
+    if ($("video").length > 0 && progress_bar.children().length > 0 && abnormalStuckDetectionLimit > 0 && pauseResume) {
         if(ProgressBar !== lastProgressBar){
             if(stuckCount!==0){
                 log("[卡顿检测] 已恢复播放，取消页面刷新计划。");
@@ -539,6 +549,8 @@ function onConfig() {
     autoCopyEnable = GM_config.get("autoCopyEnable");
     timeInterval = GM_config.get("timeInterval");
     abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
+    pauseResume = GM_config.get("pauseResume");
+    autoPlayNext = GM_config.get("autoPlayNext");
     oneShot();
     log("启动成功");
 })();

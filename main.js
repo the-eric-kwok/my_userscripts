@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.3.5
+// @version      1.0.3.6
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -59,9 +59,9 @@ var myConfig = {
             'default': true
         },
         'timeInterval': {
-            'label': '检测时间间隔（秒）', // Appears next to field
-            'type': 'int', // Makes this setting a text field
-            'default': 1 // Default value if user doesn't change it
+            'label': '检测时间间隔（秒）',
+            'type': 'int',
+            'default': 1
         },
         'abnormalStuckDetectionEnable': {
             'label': '异常卡顿自动刷新（只适用于共享课）',

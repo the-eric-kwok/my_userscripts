@@ -8,7 +8,6 @@
 // @supportURL   https://github.com/the-eric-kwok/zhihuishu_reload/issues
 // @match        *://studyh5.zhihuishu.com/videoStudy*
 // @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
-// @match        *://lc.zhihuishu.com/live/vod_room.html*
 // @require      https://greasyfork.org/scripts/28536-gm-config/code/GM_config.js?version=184529
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -19,7 +18,6 @@
 // ==/UserScript==
 
 var gxkEnable = true;
-var jmkEnable = true;
 var copyEnable = true;
 var autoMute = true;
 var auto15x = true;
@@ -29,9 +27,12 @@ var autoCopyEnable = true;
 var timeInterval = 1;
 var abnormalStuckDetectionLimit = 10;
 var autoPlayNext = true;
+var autoStop = false;
+var autoStopTime = 30;
 
 var stuckCount = 0; //卡顿计数
 var lastProgressBar = ''; //进度条缓存
+var startTime = new Date().getTime();
 
 var myConfigState = false;
 var myConfig = {
@@ -40,11 +41,6 @@ var myConfig = {
     'fields': {
         'gxkEnable': {
             'label': '在共享课上启用脚本',
-            'type': 'checkbox',
-            'default': true
-        },
-        'jmkEnable': {
-            'label': '在见面课上启用脚本',
             'type': 'checkbox',
             'default': true
         },
@@ -57,11 +53,6 @@ var myConfig = {
             'label': '在章节测试/考试中点击题目自动复制',
             'type': 'checkbox',
             'default': true
-        },
-        'timeInterval': {
-            'label': '检测时间间隔（秒）',
-            'type': 'int',
-            'default': 1
         },
         'abnormalStuckDetectionEnable': {
             'label': '异常卡顿自动刷新（只适用于共享课）',
@@ -98,6 +89,16 @@ var myConfig = {
             'type': 'checkbox',
             'default': true
         },
+        'autoStop': {
+            'label': '自动停止播放',
+            'type': 'checkbox',
+            'default': false
+        },
+        'autoStopTime': {
+            'label': '多少分钟后停止播放',
+            'type': 'int',
+            'default': '30'
+        }
     },
     'events': {
         'save': function() {
@@ -148,7 +149,7 @@ window.onresize = function(){
 
 }
 
-function explorer() {
+function explorerDetect() {
     if(navigator.userAgent.indexOf("Opera") > -1) {
         return 'Opera';
     }
@@ -166,6 +167,18 @@ function explorer() {
     }
 }
 
+function init() {
+    gxkEnable = GM_config.get("gxkEnable");
+    copyEnable = GM_config.get("copyEnable");
+    autoMute = GM_config.get("autoMute");
+    auto15x = GM_config.get("auto15x");
+    autoBQ = GM_config.get("autoBQ");
+    autoCopyEnable = GM_config.get("autoCopyEnable");
+    abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
+    autoStop = GM_config.get("autoStop");
+    autoStopTime = GM_config.get("autoStopTime");
+}
+
 
 function sleep(ms = 10){
     // 异步等待，只阻塞当前脚本调用处函数，不阻塞整个浏览器
@@ -177,13 +190,13 @@ function sleep(ms = 10){
     })
 }
 
-function date_time() {
+function dateTime() {
     var t = new Date();
     return '[' + (t.getMonth() + 1) + '/' + t.getDate() + ' ' + t.getHours() + ':' + t.getMinutes() + ':' + t.getSeconds() + '] ';
 }
 
 function log(message) {
-    console.log(date_time() + '[智慧树助手] ' + message);
+    console.log(dateTime() + '[智慧树助手] ' + message);
 }
 
 function gxk_get_not_played() {
@@ -204,20 +217,6 @@ function gxk_get_not_played() {
         {"点击展开全部": video_labels}
     );
     return video_labels;
-}
-
-function jmk_get_not_played() {
-    //见面课获取未观看列表
-    var video_labels = [];
-    var list = $('.videomenu').not('.current_player');
-    if (list.length > 0) {
-        list.each(function (list_index, list_ele) {
-            if($(list_ele).children('.videoCurrent').children('span')[0].innerText !== '100%') {
-                video_labels.push(list_ele);
-            }
-        })
-    }
-    return (video_labels);
 }
 
 function autoSwitch15x() {
@@ -315,9 +314,6 @@ function progressBarMonitor() {
             if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1){
                 next_video = $(gxk_get_not_played()[0]);
             }
-            else if (window.location.href.indexOf("lc.zhihuishu.com") !== -1) {
-                next_video = $(jmk_get_not_played()[0]);
-            }
             log("已为您自动切换下一集");
             next_video.click();
         }
@@ -389,10 +385,13 @@ function autoCopy() {
 
 }
 
+function backToMenu() {
+    $('.back').click()
+}
+
 var dialog_number = 0
 function showDialog(msg) {
     // 显示提示信息弹窗
-    console.log('showDialog', dialog_number, msg);
     if (!dialog_number)
         dialog_number = 0;
     else
@@ -436,12 +435,12 @@ function oneShot() {
         var autocp = setInterval(function() {
             if ($('.subject_describe').length > 0) {
                 autoCopy();
-                console.log('自动复制已启用');
+                log('自动复制已启用');
                 clearInterval(autocp);
             }
         }, 1000);
     }
-    if(explorer() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
+    if(explorerDetect() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)){
         window.setTimeout(showDialog, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
     }
 
@@ -449,15 +448,7 @@ function oneShot() {
 
 function mainLoop() {
     try {
-        gxkEnable = GM_config.get("gxkEnable");
-        jmkEnable = GM_config.get("jmkEnable");
-        copyEnable = GM_config.get("copyEnable");
-        autoMute = GM_config.get("autoMute");
-        auto15x = GM_config.get("auto15x");
-        autoBQ = GM_config.get("autoBQ");
-        autoCopyEnable = GM_config.get("autoCopyEnable");
-        timeInterval = GM_config.get("timeInterval");
-        abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
+        init();
         config_button_inject();
         if(window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && copyEnable){
             //测试题
@@ -473,19 +464,13 @@ function mainLoop() {
             progressBarMonitor();
             pauseDetector();
             stuckDetector();
-        }
-        else if(window.location.href.indexOf("lc.zhihuishu.com") !== -1 && jmkEnable) {
-            //见面课
-            autoSwitch15x();
-            autoSwitchBQ();
-            autoSwitchMute();
-            closeTips();
-            pauseDetector();
-            progressBarMonitor();
+            if (autoStop && (new Date().getTime() - startTime > autoStopTime * 60 * 1000)) {
+                backToMenu();
+            }
         }
     }
     catch (err) {
-        console.log(date_time(), err.message);
+        console.log(dateTime(), err.message);
     }
 }
 
@@ -540,17 +525,7 @@ function onConfig() {
     'use strict';
     window.onload = window.setInterval(mainLoop, (timeInterval*1000));
     GM_config.init(myConfig);
-    gxkEnable = GM_config.get("gxkEnable");
-    jmkEnable = GM_config.get("jmkEnable");
-    copyEnable = GM_config.get("copyEnable");
-    autoMute = GM_config.get("autoMute");
-    auto15x = GM_config.get("auto15x");
-    autoBQ = GM_config.get("autoBQ");
-    autoCopyEnable = GM_config.get("autoCopyEnable");
-    timeInterval = GM_config.get("timeInterval");
-    abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
-    pauseResume = GM_config.get("pauseResume");
-    autoPlayNext = GM_config.get("autoPlayNext");
+    init();
     oneShot();
     log("启动成功");
 })();

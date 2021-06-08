@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.1.2
+// @version      1.2.0
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -149,6 +149,9 @@ var myConfig = {
     ].join('\n') + '\n'
 }
 
+/**
+ * 在浏览器窗口大小改变时自动重新定位设置菜单
+ */
 window.onresize = function () {
     // 监听窗口大小改变
     if ($("iframe#MyConfig").css('left') !== undefined) {
@@ -157,6 +160,10 @@ window.onresize = function () {
 
 }
 
+/**
+ * 获取浏览器名称
+ * @returns 浏览器名称（如 "Safari"）
+ */
 function explorerDetect() {
     if (navigator.userAgent.indexOf("Opera") > -1) {
         return 'Opera';
@@ -175,6 +182,9 @@ function explorerDetect() {
     }
 }
 
+/**
+ * 获取 GM_config 中存储的用户自定义设置
+ */
 function init() {
     gxkEnable = GM_config.get("gxkEnable");
     copyEnable = GM_config.get("copyEnable");
@@ -191,7 +201,14 @@ function init() {
     autoStopTime = GM_config.get("autoStopTime");
 }
 
-
+/**
+ * 异步等待，只阻塞当前脚本调用处函数，不阻塞整个浏览器，默认等待 10 ms
+ * 
+ * 调用方法：await sleep() 或 await sleep (1000)
+ * 
+ * @param {number} ms 等待的毫秒数
+ * @returns 一个匿名函数的 Promise
+ */
 function sleep(ms = 10) {
     // 异步等待，只阻塞当前脚本调用处函数，不阻塞整个浏览器
     // 调用方法：await sleep() 或 await sleep (1000)
@@ -202,17 +219,28 @@ function sleep(ms = 10) {
     })
 }
 
+/**
+ * 获取当前时间
+ * @returns 当前时间，格式化为：[MM/dd HH:mm:ss]
+ */
 function dateTime() {
     var t = new Date();
     return '[' + (t.getMonth() + 1) + '/' + t.getDate() + ' ' + t.getHours() + ':' + t.getMinutes() + ':' + t.getSeconds() + '] ';
 }
 
+/**
+ * 自定义的控制台 log 方法
+ * @param {String} message 日志内容
+ */
 function log(message) {
     console.log(dateTime() + '[智慧树助手] ' + message);
 }
 
-function gxk_get_not_played() {
-    //共享课获取未观看列表
+/**
+ * 获取未观看列表
+ * @returns 未观看的网课列表
+ */
+function getNotPlayed() {
     var video_labels = [];
     var list = $('.clearfix.video');
     if (list.length > 0) {
@@ -225,12 +253,15 @@ function gxk_get_not_played() {
         });
     }
     console.log(
-        "[未完成检测] 更新未看列表，还剩" + video_labels.length + "个视频未完成。\n",
+        "更新未看列表，还剩" + video_labels.length + "个视频未完成\n",
         { "点击展开全部": video_labels }
     );
     return video_labels;
 }
 
+/**
+ * 切换1.5倍速
+ */
 function autoSwitch15x() {
     if ($("video").length > 0 && $("video")[0].playbackRate != 1.5 && auto15x) {
         log('切换到1.5倍');
@@ -243,6 +274,9 @@ function autoSwitch15x() {
     }
 }
 
+/**
+ * 切换标清
+ */
 function autoSwitchBQ() {
     if ($(".definiLines .active")[0].className === "line1gq switchLine active" && autoBQ) {
         log('切换到标清');
@@ -252,6 +286,9 @@ function autoSwitchBQ() {
     }
 }
 
+/**
+ * 切换静音
+ */
 function autoSwitchMute() {
     if ($("video")[0].volume > 0 && autoMute) {
         log('自动静音');
@@ -261,8 +298,10 @@ function autoSwitchMute() {
     }
 }
 
+/**
+ * 关闭页面加载后的一些“烦人的”弹窗
+ */
 function closeTips() {
-    /*关闭「学前必读」弹窗*/
     if ($('.dialog[style!="display: none;"]:has(.dialog-read)').length > 0) {
         log("学前必读已关闭");
         $('.iconguanbi').click();
@@ -279,8 +318,10 @@ function closeTips() {
     }
 }
 
+/**
+ * 关闭弹题测验
+ */
 async function closePopUpTest() {
-    /*弹题测验*/
     if (autoClosePopUpTest) {
         var pop_up = $('.dialog-test');
         if (pop_up.length > 0) {
@@ -307,26 +348,32 @@ async function closePopUpTest() {
             }
             pop_up.find('div.btn').click();
             log(
-                "[弹题测验] 为您跳过弹题测验，" +
+                "为您跳过弹题测验，" +
                 ((answer === guess_char) ? ("一次蒙对，答案：" + answer) : ("蒙的" + guess_char + '，正确答案：' + answer))
-                + "。"
             );
         }
     }
 }
 
+/**
+ * 检测是否播放完成
+ */
 function progressBarMonitor() {
-    /*检测是否播放完成*/
     var progress_bar = $('.nPlayTime');
     //监控进度条
-    // console.log(progress_bar.children);
     if (progress_bar.children().length > 0 && autoPlayNext) {
         var ProgressBar = progress_bar.children('.currentTime').text();
-        if ((ProgressBar !== '00:00:00') && (ProgressBar === progress_bar.children('.duration').text())) {
-            log("[进度条] 检测到进度条已满。");
+        // 跳集条件：
+        // 1. 剩余时间不为 00:00:00 （即视频已成功加载）
+        // 2. 已播放时间与剩余时间相等（即视频已播放完毕）
+        // 3. 右侧目录中正在播放的栏目需要有 time_icofinish 图标（即系统已记录下视频播放完成）
+        // 若以上三个条件中任意一个不满足则不跳集，而是回到视频开头重新开始（或由 stuckDetector() 函数刷新页面）
+        if ((ProgressBar !== '00:00:00') && (ProgressBar === progress_bar.children('.duration').text() &&
+            ($('.current_play').find('.time_icofinish').length > 0))) {
+            log("检测到进度条已满");
             var next_video = null;
             if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1) {
-                next_video = $(gxk_get_not_played()[0]);
+                next_video = $(getNotPlayed()[0]);
             }
             log("已为您自动切换下一集");
             next_video.click();
@@ -334,28 +381,32 @@ function progressBarMonitor() {
     }
 }
 
+/**
+ * 暂停检测
+ */
 function pauseDetector() {
-    /*暂停检测*/
     if (pauseResume) {
         var play_Button = $(".playButton");
         if (play_Button.length > 0) {
             //点击暂停按钮，将继续播放视频
             play_Button.click();
-            log("[暂停检测] 继续播放。");
+            log("继续播放");
             // play_Button.children[0].click();
         }
     }
 }
 
+/**
+ * 卡顿检测
+ */
 function stuckDetector() {
-    /*卡顿检测*/
     if (abnormalStuckDetectionEnable) {
         var progress_bar = $('.nPlayTime');
         var ProgressBar = progress_bar.children('.currentTime').text();
         if ($("video").length > 0 && progress_bar.children().length > 0 && abnormalStuckDetectionLimit > 0 && pauseResume) {
             if (ProgressBar !== lastProgressBar) {
                 if (stuckCount !== 0) {
-                    log("[卡顿检测] 已恢复播放，取消页面刷新计划。");
+                    log("已恢复播放，取消页面刷新计划");
                 }
                 stuckCount = 0;
             }
@@ -366,7 +417,7 @@ function stuckDetector() {
                 }
                 else {
                     stuckCount += 1;
-                    log("[卡顿检测] 即将刷新页面…… " + stuckCount + "/" + abnormalStuckDetectionLimit);
+                    log("即将刷新页面…… " + stuckCount + "/" + abnormalStuckDetectionLimit);
                 }
             }
             lastProgressBar = ProgressBar;
@@ -374,8 +425,10 @@ function stuckDetector() {
     }
 }
 
+/**
+ * 强制允许复制
+ */
 function copyEnabler() {
-    // 强制复制
     if (document.onselectstart !== null) {
         log('强制复制');
         document.oncontextmenu = null;
@@ -386,8 +439,10 @@ function copyEnabler() {
     }
 }
 
+/**
+ * 点击题目自动复制
+ */
 function autoCopy() {
-    // 点击题目自动复制
     function _autoCopy() {
         console.log($(this).text());
         GM_setClipboard($(this).text());
@@ -398,16 +453,22 @@ function autoCopy() {
     }
     $('.subject_describe').on("click", _autoCopy);
     $('.smallStem_describe').on("click", _autoCopy);
-
 }
 
+/**
+ * 返回学堂
+ */
 function backToMenu() {
     $('.back').click()
 }
 
-var dialog_number = 0
+var dialog_number = 0;  // 弹窗编号
+var dialog_count_down = 5;  // 弹窗自动关闭倒计时
+/**
+ * 显示提示信息弹窗
+ * @param {String} msg 弹窗内消息内容
+ */
 function showDialog(msg) {
-    // 显示提示信息弹窗
     if (!dialog_number)
         dialog_number = 0;
     else
@@ -428,7 +489,7 @@ function showDialog(msg) {
         '    <div class="el-dialog__footer">' +
         '      <span class="dialog-footer">' +
         '        <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton' + dialog_number + '">' +
-        '          <span>我知道了</span>' +
+        '          <span id="confirm-btn">我知道了 (' + dialog_count_down + ')</span>' +
         '        </button>' +
         '      </span>' +
         '    </div>' +
@@ -442,8 +503,24 @@ function showDialog(msg) {
     }
     $('#DialogCloseButton' + dialog_number).on('click', closeDialog);
     $('#DialogConfirmButton' + dialog_number).on('click', closeDialog);
+    /**
+     * 超时后自动关闭弹窗
+     */
+    function countDown() {
+        if (dialog_count_down > 0) {
+            dialog_count_down--;
+            $('#confirm-btn').text('我知道了 (' + dialog_count_down + ')')
+            window.setTimeout(countDown, 1000);
+        } else {
+            closeDialog();
+        }
+    }
+    window.setTimeout(countDown, 1000);
 }
 
+/**
+ * 一些仅在加载完成后执行一次的功能
+ */
 function oneShot() {
     if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && autoCopyEnable) {
         //测试题
@@ -459,9 +536,11 @@ function oneShot() {
     if (explorerDetect() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)) {
         window.setTimeout(showDialog, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
     }
-
 }
 
+/**
+ * 主循环
+ */
 function mainLoop() {
     try {
         init();
@@ -490,6 +569,9 @@ function mainLoop() {
     }
 }
 
+/**
+ * 在页面中插入“脚本设置”按钮
+ */
 function config_button_inject() {
     if ($('#myConfBtn').length == 0) {
         if ($(".Patternbtn-div").length > 0) {
@@ -528,8 +610,10 @@ function config_button_inject() {
     }
 }
 
+/**
+ * 点击“脚本设置”按钮时执行
+ */
 function onConfig() {
-    // 点击“脚本设置”按钮时
     if (!myConfigState) {
         GM_config.open();
     } else {
@@ -540,7 +624,7 @@ function onConfig() {
 (function () {
     'use strict';
     window.onload = window.setInterval(mainLoop, (timeInterval * 1000));
-    GM_config.init(myConfig);
+    GM_config.init(myConfig);  //使用 myConfig 初始化 GM_config 设置面板
     init();
     oneShot();
     log("启动成功");

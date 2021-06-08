@@ -1,4 +1,3 @@
-# [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 主要功能：
 
 1. 智慧树共享课自动跳过题目
@@ -11,11 +10,9 @@
 
 本脚本更适合刷课用，因为它只用于自动播放那些没有打对号（没播放成100%）的视频
 
-脚本发布在 [GreasyFork](https://greasyfork.org/zh-CN/scripts/416911-reload-智慧树共享课刷课-智慧树共享课自动跳过题目-智慧树共享课自动播放下一个视频-智慧树共享课自动播放未完成的视频)
-
 GitHub 链接为 [https://github.com/the-eric-kwok/zhihuishu_reload](https://github.com/the-eric-kwok/zhihuishu_reload)，欢迎来 Star 或者提 issue 😁
 
-原脚本地址为：[https://greasyfork.org/zh-CN/scripts/398608-已失效-智慧树共享课刷课-智慧树共享课自动跳过题目-智慧树共享课自动播放下一个视频-智慧树共享课自动播放未完成的视频](https://greasyfork.org/zh-CN/scripts/398608-已失效-智慧树共享课刷课-智慧树共享课自动跳过题目-智慧树共享课自动播放下一个视频-智慧树共享课自动播放未完成的视频)，本脚本修复了自动播放下一个视频的功能。
+感谢原作者 C选项_沉默，本脚本是对他的作品的改进和增强。由于原作者已删除脚本，原作品链接因此被移除。
 
 本项目依赖一个外部库：[GM_config](https://codechina.csdn.net/-/snippets/198/raw/master/GM_config.js)，因 GreasyFork 访问速度太慢，故复制了一份托管与国内网站 codechina.csdn.net
 觉得官方库导致设置面板打开速度太慢的童鞋们可以自行修改代码

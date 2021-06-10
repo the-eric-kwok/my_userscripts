@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.2.1
+// @version      1.2.2
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -587,6 +587,7 @@ function mainLoop() {
         else if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable) {
             //共享课
             if ($(".controlsBar").length > 0) {
+                //log("视频正常加载");
                 autoSwitch15x();
                 autoSwitchBQ();
                 autoSwitchMute();
@@ -599,6 +600,7 @@ function mainLoop() {
                     backToMenu();
                 }
             } else {
+                //log("视频未加载");
                 stuckDetector();
             }
         }
@@ -612,6 +614,16 @@ function mainLoop() {
  * 在页面中插入“脚本设置”按钮
  */
 function config_button_inject() {
+    /**
+     * 点击“脚本设置”按钮时执行
+     */
+    function onConfig() {
+        if (!myConfigState) {
+            GM_config.open();
+        } else {
+            GM_config.save();
+        }
+    }
     if ($('#myConfBtn').length == 0) {
         if ($(".Patternbtn-div").length > 0) {
             $(".Patternbtn-div").before([
@@ -646,17 +658,6 @@ function config_button_inject() {
                 '</div>'].join('\n'));
             $("#myConfBtn").on("click", onConfig);
         }
-    }
-}
-
-/**
- * 点击“脚本设置”按钮时执行
- */
-function onConfig() {
-    if (!myConfigState) {
-        GM_config.open();
-    } else {
-        GM_config.save();
     }
 }
 

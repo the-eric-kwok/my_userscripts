@@ -391,7 +391,6 @@ function pauseDetector() {
             //点击暂停按钮，将继续播放视频
             play_Button.click();
             log("继续播放");
-            // play_Button.children[0].click();
         }
     }
 }
@@ -446,10 +445,11 @@ function autoCopy() {
     function _autoCopy() {
         console.log($(this).text());
         GM_setClipboard($(this).text());
+        showDialog("复制成功！", 1, true, true);
         $(this).css("background-color", "#ECECEC");
         setTimeout(function (elem) {
             elem.css("background-color", "#FFFFFF");
-        }, 400, $(this));
+        }, 200, $(this));
     }
     $('.subject_describe').on("click", _autoCopy);
     $('.smallStem_describe').on("click", _autoCopy);
@@ -463,41 +463,59 @@ function backToMenu() {
 }
 
 var dialog_number = 0;  // 弹窗编号
-var dialog_count_down = 5;  // 弹窗自动关闭倒计时
+var dialog_timeout = 5;  // 弹窗自动关闭倒计时
 /**
  * 显示提示信息弹窗
  * @param {String} msg 弹窗内消息内容
+ * @param {number} timeout 弹窗自动收起的超时时间（秒），默认为 5
+ * @param {boolean} disable_header 不显示对话框标题栏，默认为 false
+ * @param {boolean} disable_footer 不显示对话框按钮栏，默认为 false
  */
-function showDialog(msg) {
+function showDialog(msg, timeout, disable_header, disable_footer) {
+    msg = msg || "默认消息内容";
+    timeout = timeout || 5;
+    disable_header = disable_header || false;
+    disable_footer = disable_footer || false;
+    dialog_timeout = timeout;
     if (!dialog_number)
         dialog_number = 0;
     else
         dialog_number++;
-    $('#app').before('<div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">' +
-        '  <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog' + dialog_number + '">' +
-        '    <div class="el-dialog__header">' +
-        '      <span class="el-dialog__title">✅智慧树助手提示您✅</span>' +
-        '      <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton' + dialog_number + '">' +
-        '        <i class="el-dialog__close el-icon el-icon-close"></i>' +
-        '      </button>' +
-        '    </div>' +
-        '    <div class="el-dialog__body">' +
+    _html =
+        '<div class="el-dialog__body">' +
         '      <div class="operate-dialog-1" id="DialogContent' + dialog_number + '">' +
         '        <p>' + msg + '</p>' +
         '      </div> ' +
-        '    </div>' +
-        '    <div class="el-dialog__footer">' +
-        '      <span class="dialog-footer">' +
-        '        <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton' + dialog_number + '">' +
-        '          <span id="confirm-btn">我知道了 (' + dialog_count_down + ')</span>' +
-        '        </button>' +
-        '      </span>' +
-        '    </div>' +
+        '    </div>';
+    if (!disable_header) {
+        _html =
+            '    <div class="el-dialog__header">' +
+            '      <span class="el-dialog__title">✅智慧树助手提示您✅</span>' +
+            '      <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton' + dialog_number + '">' +
+            '        <i class="el-dialog__close el-icon el-icon-close"></i>' +
+            '      </button>' +
+            '    </div>' +
+            _html;
+    }
+    if (!disable_footer) {
+        _html +=
+            '    <div class="el-dialog__footer">' +
+            '      <span class="dialog-footer">' +
+            '        <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton' + dialog_number + '">' +
+            '          <span id="confirm-btn">我知道了 (' + dialog_timeout + ')</span>' +
+            '        </button>' +
+            '      </span>' +
+            '    </div>'
+    }
+    _html =
+        '<div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">' +
+        '  <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog' + dialog_number + '">' +
+        _html +
         '  </div>' +
         '</div>'
-    );
+    $('#app').before(_html);
     $('#Dialog' + dialog_number).css('width', '400px')
-    $('#DialogContent' + dialog_number).css("margin", "0 20px");
+    $('#DialogContent' + dialog_number).css({ "margin": "0 20px", "padding": "10px 0px 0px" });
     function closeDialog() {
         $('.dialog-tips').remove()
     }
@@ -507,10 +525,10 @@ function showDialog(msg) {
      * 超时后自动关闭弹窗
      */
     function countDown() {
-        if (dialog_count_down > 0) {
-            dialog_count_down--;
-            $('#confirm-btn').text('我知道了 (' + dialog_count_down + ')')
+        if (dialog_timeout > 0) {
+            $('#confirm-btn').text('我知道了 (' + dialog_timeout + ')')
             window.setTimeout(countDown, 1000);
+            dialog_timeout--;
         } else {
             closeDialog();
         }
@@ -522,7 +540,9 @@ function showDialog(msg) {
  * 一些仅在加载完成后执行一次的功能
  */
 function oneShot() {
-    if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && autoCopyEnable) {
+    if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1
+        && window.location.href.indexOf("dohomework") !== -1
+        && autoCopyEnable) {
         //测试题
         setTimeout(showDialog, 1000, '点击题目可以一键复制噢～');
         var autocp = setInterval(function () {

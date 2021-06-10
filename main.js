@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.2.0
+// @version      1.2.1
 // @description  智慧树共享课刷课,智慧树共享课自动跳过题目，智慧树共享课自动播放下一个视频，智慧树共享课自动播放未完成的视频
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -278,9 +278,10 @@ function autoSwitch15x() {
  * 切换标清
  */
 function autoSwitchBQ() {
-    if ($(".definiLines .active")[0].className === "line1gq switchLine active" && autoBQ) {
-        log('切换到标清');
-        if ($(".line1bq.switchLine").length > 0) {
+    if ($(".definiLines .active").length > 0) {
+        if ($(".definiLines .active")[0].className === "line1gq switchLine active" && autoBQ &&
+            $(".line1bq.switchLine").length > 0) {
+            log('切换到标清');
             $(".line1bq.switchLine")[0].click();
         }
     }
@@ -290,9 +291,9 @@ function autoSwitchBQ() {
  * 切换静音
  */
 function autoSwitchMute() {
-    if ($("video")[0].volume > 0 && autoMute) {
-        log('自动静音');
-        if ($(".volumeIcon").length > 0) {
+    if ($("video").length > 0) {
+        if ($("video")[0].volume > 0 && autoMute && $(".volumeIcon").length > 0) {
+            log('自动静音');
             $(".volumeIcon")[0].click();
         }
     }
@@ -302,12 +303,14 @@ function autoSwitchMute() {
  * 关闭页面加载后的一些“烦人的”弹窗
  */
 function closeTips() {
-    if ($('.dialog[style!="display: none;"]:has(.dialog-read)').length > 0) {
+    if ($('.dialog[style!="display: none;"]:has(.dialog-read)').length > 0
+        && $('.iconguanbi').length > 0) {
         log("学前必读已关闭");
         $('.iconguanbi').click();
     }
 
-    if ($('.dialog-warn').css('display') !== 'none') {
+    if ($('.dialog-warn').css('display') !== 'none'
+        && $('.el-icon-close').length > 0) {
         console.log('智慧树警告已关闭', $('.el-icon-close'));
         $('.el-icon-close').click();
     }
@@ -322,36 +325,34 @@ function closeTips() {
  * 关闭弹题测验
  */
 async function closePopUpTest() {
-    if (autoClosePopUpTest) {
-        var pop_up = $('.dialog-test');
-        if (pop_up.length > 0) {
-            //关闭出现的检测题
-            var topic_item = $('.topic-item');
-            var guess_answer = parseInt(Math.random() * topic_item.length);
-            topic_item[guess_answer].click();
-            await sleep();
-            var guess_char = 'ABCD'[guess_answer];
-            //随机点击一个选项
-            var answer = $('.answer').children().text();
-            //选出正确答案
-            if (answer.indexOf('A') !== -1 && answer.indexOf(guess_char) === -1) {
-                topic_item[0].click();
-            }
-            if (answer.indexOf('B') !== -1 && answer.indexOf(guess_char) === -1) {
-                topic_item[1].click();
-            }
-            if (answer.indexOf('C') !== -1 && answer.indexOf(guess_char) === -1) {
-                topic_item[2].click();
-            }
-            if (answer.indexOf('D') !== -1 && answer.indexOf(guess_char) === -1) {
-                topic_item[3].click();
-            }
-            pop_up.find('div.btn').click();
-            log(
-                "为您跳过弹题测验，" +
-                ((answer === guess_char) ? ("一次蒙对，答案：" + answer) : ("蒙的" + guess_char + '，正确答案：' + answer))
-            );
+    var pop_up = $('.dialog-test');
+    if (pop_up.length > 0 && autoClosePopUpTest) {
+        //关闭出现的检测题
+        var topic_item = $('.topic-item');
+        var guess_answer = parseInt(Math.random() * topic_item.length);
+        topic_item[guess_answer].click();
+        await sleep();
+        var guess_char = 'ABCD'[guess_answer];
+        //随机点击一个选项
+        var answer = $('.answer').children().text();
+        //选出正确答案
+        if (answer.indexOf('A') !== -1 && answer.indexOf(guess_char) === -1) {
+            topic_item[0].click();
         }
+        if (answer.indexOf('B') !== -1 && answer.indexOf(guess_char) === -1) {
+            topic_item[1].click();
+        }
+        if (answer.indexOf('C') !== -1 && answer.indexOf(guess_char) === -1) {
+            topic_item[2].click();
+        }
+        if (answer.indexOf('D') !== -1 && answer.indexOf(guess_char) === -1) {
+            topic_item[3].click();
+        }
+        pop_up.find('div.btn').click();
+        log(
+            "为您跳过弹题测验，" +
+            ((answer === guess_char) ? ("一次蒙对，答案：" + answer) : ("蒙的" + guess_char + '，正确答案：' + answer))
+        );
     }
 }
 
@@ -361,7 +362,7 @@ async function closePopUpTest() {
 function progressBarMonitor() {
     var progress_bar = $('.nPlayTime');
     //监控进度条
-    if (progress_bar.children().length > 0 && autoPlayNext) {
+    if (progress_bar.length > 0 && progress_bar.children().length > 0 && autoPlayNext) {
         var ProgressBar = progress_bar.children('.currentTime').text();
         // 跳集条件：
         // 1. 剩余时间不为 00:00:00 （即视频已成功加载）
@@ -385,13 +386,11 @@ function progressBarMonitor() {
  * 暂停检测
  */
 function pauseDetector() {
-    if (pauseResume) {
-        var play_Button = $(".playButton");
-        if (play_Button.length > 0) {
-            //点击暂停按钮，将继续播放视频
-            play_Button.click();
-            log("继续播放");
-        }
+    var play_Button = $(".playButton");
+    if (play_Button.length > 0 && pauseResume) {
+        //点击暂停按钮，将继续播放视频
+        play_Button.click();
+        log("继续播放");
     }
 }
 
@@ -401,25 +400,38 @@ function pauseDetector() {
 function stuckDetector() {
     if (abnormalStuckDetectionEnable) {
         var progress_bar = $('.nPlayTime');
-        var ProgressBar = progress_bar.children('.currentTime').text();
-        if ($("video").length > 0 && progress_bar.children().length > 0 && abnormalStuckDetectionLimit > 0 && pauseResume) {
-            if (ProgressBar !== lastProgressBar) {
-                if (stuckCount !== 0) {
-                    log("已恢复播放，取消页面刷新计划");
-                }
-                stuckCount = 0;
-            }
-            else {
-                if (stuckCount >= abnormalStuckDetectionLimit) {
+        if (progress_bar.length > 0) {
+            // 播放器正常加载的情况
+            var ProgressBar = progress_bar.children('.currentTime').text();
+            if ($("video").length > 0 && progress_bar.children().length > 0 &&
+                abnormalStuckDetectionLimit > 0 && pauseResume) {
+                if (ProgressBar !== lastProgressBar) {
+                    if (stuckCount !== 0) {
+                        log("已恢复播放，取消页面刷新计划");
+                    }
                     stuckCount = 0;
-                    location.reload();
                 }
                 else {
-                    stuckCount += 1;
-                    log("即将刷新页面…… " + stuckCount + "/" + abnormalStuckDetectionLimit);
+                    if (stuckCount >= abnormalStuckDetectionLimit) {
+                        stuckCount = 0;
+                        location.reload();
+                    }
+                    else {
+                        stuckCount++;
+                        log("即将刷新页面…… " + stuckCount + "/" + abnormalStuckDetectionLimit);
+                    }
                 }
+                lastProgressBar = ProgressBar;
             }
-            lastProgressBar = ProgressBar;
+        } else {
+            // 播放器未正常加载的情况
+            if (stuckCount >= abnormalStuckDetectionLimit) {
+                stuckCount = 0;
+                location.reload();
+            } else {
+                stuckCount++;
+                log("即将刷新页面…… " + stuckCount + "/" + abnormalStuckDetectionLimit);
+            }
         }
     }
 }
@@ -459,7 +471,9 @@ function autoCopy() {
  * 返回学堂
  */
 function backToMenu() {
-    $('.back').click()
+    if ($('.back').length > 0) {
+        $('.back').click()
+    }
 }
 
 var dialog_number = 0;  // 弹窗编号
@@ -553,7 +567,8 @@ function oneShot() {
             }
         }, 1000);
     }
-    if (explorerDetect() === 'Safari' && (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 || window.location.href.indexOf("lc.zhihuishu.com") !== -1)) {
+    if (explorerDetect() === 'Safari'
+        && window.location.href.indexOf("studyh5.zhihuishu.com") !== -1) {
         window.setTimeout(showDialog, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
     }
 }
@@ -571,16 +586,20 @@ function mainLoop() {
         }
         else if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable) {
             //共享课
-            autoSwitch15x();
-            autoSwitchBQ();
-            autoSwitchMute();
-            closeTips();
-            closePopUpTest();
-            progressBarMonitor();
-            pauseDetector();
-            stuckDetector();
-            if (autoStop && (new Date().getTime() - startTime > autoStopTime * 60 * 1000)) {
-                backToMenu();
+            if ($(".controlsBar").length > 0) {
+                autoSwitch15x();
+                autoSwitchBQ();
+                autoSwitchMute();
+                closeTips();
+                closePopUpTest();
+                progressBarMonitor();
+                pauseDetector();
+                stuckDetector();
+                if (autoStop && (new Date().getTime() - startTime > autoStopTime * 60 * 1000)) {
+                    backToMenu();
+                }
+            } else {
+                stuckDetector();
             }
         }
     }

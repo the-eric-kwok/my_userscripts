@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.2.2
+// @version      1.2.3
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -555,7 +555,7 @@ function showDialog(msg, timeout, disable_header, disable_footer) {
  */
 function oneShot() {
     if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1
-        && window.location.href.indexOf("dohomework") !== -1
+        && (window.location.href.indexOf("dohomework") !== -1 || window.location.href.indexOf("doexamination") !== -1)
         && autoCopyEnable) {
         //测试题
         setTimeout(showDialog, 1000, '点击题目可以一键复制噢～');

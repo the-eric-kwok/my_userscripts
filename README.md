@@ -21,6 +21,6 @@ GitHub 链接为 [https://github.com/the-eric-kwok/zhihuishu_reload](https://git
 + // @require      https://codechina.csdn.net/-/snippets/198/raw/master/GM_config.js
 ```
 
-此外项目中亦提供了不依赖于 GM_config 的版本，即 [No_GM_config.js](https://raw.githubusercontent.com/the-eric-kwok/zhihuishu_reload/main/No\_GM\_config.js) ，经测试可以用于：
+**此外项目中亦提供了不依赖于 GM_config 的版本，即 [No\_GM\_config.js](https://raw.githubusercontent.com/the-eric-kwok/zhihuishu_reload/main/No\_GM\_config.js) ，经测试可以用于：**
 - 安卓 Via 浏览器脚本中。如图所示配置即可![](https://i.loli.net/2021/07/05/4lyFNrkdQxKUc9P.jpg)
 - iOS Alook 浏览器。配置为被动脚本，匹配域名为 `studyh5.zhihuishu.com@@onlineexamh5new.zhihuishu.com`，并且应禁用视频悬窗功能并允许「设置-通用设置」中的自动弹出式窗口。如：![](https://i.loli.net/2021/07/05/nGWuJimqzKLTDsF.jpg)

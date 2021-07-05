@@ -10,6 +10,12 @@
 
 本脚本更适合刷课用，因为它只用于自动播放那些没有打对号（没播放成100%）的视频
 
+预览截图：
+
+![3D10B60C-88EC-4639-A50B-118327363C8F.jpeg](https://i.loli.net/2021/07/05/DZlFtGw43aVA8sq.jpg)
+
+![DE7B30E4-5374-4A2C-BCB9-3A7ADC439E4B.png](https://i.loli.net/2021/07/05/evQy9ZYo4Ft5zKh.png)
+
 GitHub 链接为 [https://github.com/the-eric-kwok/zhihuishu_reload](https://github.com/the-eric-kwok/zhihuishu_reload)，欢迎来 Star 或者提 issue 😁
 
 感谢原作者 C选项_沉默，本脚本是对他的作品的改进和增强。由于原作者已删除脚本，原作品链接因此被移除。

@@ -21,4 +21,4 @@ GitHub 链接为 [https://github.com/the-eric-kwok/zhihuishu_reload](https://git
 + // @require      https://codechina.csdn.net/-/snippets/198/raw/master/GM_config.js
 ```
 
-此外项目中亦提供了不依赖于 GM_config 的版本，即 [No_GM_config.js](https://raw.githubusercontent.com/the-eric-kwok/zhihuishu_reload/main/No_GM_config.js) ，经测试可以用于安卓 Via 浏览器脚本中。
+此外项目中亦提供了不依赖于 GM_config 的版本，即 [No_GM_config.js](https://raw.githubusercontent.com/the-eric-kwok/zhihuishu_reload/main/No_GM_config.js) ，经测试可以用于安卓 Via 浏览器脚本中。如图所示配置即可![](https://i.loli.net/2021/07/05/hRsm4pBJNL31Wwi.png)

@@ -1,16 +1,13 @@
-// ==UserScript==
-// @name         [Reload]智慧树共享课挂机刷课助手
-// @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.2.3
-// @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
-// @author       EricKwok, C选项_沉默
-// @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
-// @supportURL   https://github.com/the-eric-kwok/zhihuishu_reload/issues
-// @match        *://studyh5.zhihuishu.com/videoStudy*
-// @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
-// @run-at       document-end
-// @license      GPL
-// ==/UserScript==
+/*
+ * @name:        [Reload]智慧树共享课挂机刷课助手
+ * @version:     1.2.3
+ * @description: 智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
+ * @author:      EricKwok, C选项_沉默
+ * @include:     studyh5.zhihuishu.com,onlineexamh5new.zhihuishu.com
+ * @createTime:  2021-7-5 12:00
+ * @updateTime:  2021-7-10 9:13
+ * @license:     GPL
+ */
 
 var gxkEnable = true;
 var copyEnable = true;

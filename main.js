@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.2.3
+// @version      1.2.4
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -568,7 +568,8 @@ function oneShot() {
         }, 1000);
     }
     if (explorerDetect() === 'Safari'
-        && window.location.href.indexOf("studyh5.zhihuishu.com") !== -1) {
+        && window.location.href.indexOf("studyh5.zhihuishu.com") !== -1
+        && autoMute == false) {
         window.setTimeout(showDialog, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
     }
 }
@@ -663,6 +664,12 @@ function config_button_inject() {
 
 (function () {
     'use strict';
+    const key = encodeURIComponent('EricKwok:智慧树助手');
+    if (window[key]) {
+        //保证脚本只被加载一次
+        return;
+    }
+    window[key] = true;
     window.onload = window.setInterval(mainLoop, (timeInterval * 1000));
     GM_config.init(myConfig);  //使用 myConfig 初始化 GM_config 设置面板
     init();

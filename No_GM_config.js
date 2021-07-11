@@ -1,12 +1,12 @@
 /*
- * @name:        [Reload]智慧树共享课挂机刷课助手
- * @version:     1.2.3
+ * @name: [Reload]智慧树共享课挂机刷课助手
+ * @version: 1.2.4
  * @description: 智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
- * @author:      EricKwok, C选项_沉默
- * @include:     studyh5.zhihuishu.com,onlineexamh5new.zhihuishu.com
- * @createTime:  2021-7-5 12:00
- * @updateTime:  2021-7-10 9:13
- * @license:     GPL
+ * @author: EricKwok, C选项_沉默
+ * @include: studyh5.zhihuishu.com,onlineexamh5new.zhihuishu.com
+ * @createTime: 2021-7-5 12:00
+ * @updateTime: 2021-7-11 12:40
+ * @license: GPL
  */
 
 var gxkEnable = true;
@@ -309,7 +309,7 @@ function autoCopy() {
     function _autoCopy() {
         console.log($(this).text());
         let transfer = document.createElement('input');
-        document.body.appendChild(transfer);
+        document.body.appendChild(transfer);  // FIXME: 修复点击时跳转到网页末尾的问题
         transfer.value = $(this).text();  // 这里表示想要复制的内容
         transfer.focus();
         transfer.select();
@@ -430,7 +430,8 @@ function oneShot() {
         }, 1000);
     }
     if (explorerDetect() === 'Safari'
-        && window.location.href.indexOf("studyh5.zhihuishu.com") !== -1) {
+        && window.location.href.indexOf("studyh5.zhihuishu.com") !== -1
+        && autoMute == false) {
         window.setTimeout(showDialog, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
     }
 }
@@ -472,6 +473,12 @@ function mainLoop() {
 
 (function () {
     'use strict';
+    const key = encodeURIComponent('EricKwok:智慧树助手');
+    if (window[key]) {
+        //保证脚本只被加载一次
+        return;
+    }
+    window[key] = true;
     window.onload = window.setInterval(mainLoop, (timeInterval * 1000));
     oneShot();
     log("启动成功");

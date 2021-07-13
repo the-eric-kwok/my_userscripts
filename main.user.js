@@ -1,13 +1,17 @@
 // ==UserScript==
-// @name         [Reload]智慧树共享课挂机刷课助手（无配置界面）
+// @name         [Reload]智慧树共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.0
+// @version      1.2.5
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
 // @supportURL   https://github.com/the-eric-kwok/zhihuishu_reload/issues
 // @match        *://studyh5.zhihuishu.com/videoStudy*
 // @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
+// @require      https://greasyfork.org/scripts/28536-gm-config/code/GM_config.js
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
 // @run-at       document-end
 // @license      GPL
 // ==/UserScript==
@@ -33,6 +37,127 @@ var lastProgressBar = '';  // 进度条缓存
 var startTime = new Date().getTime();
 
 var myConfigState = false;
+var myConfig = {
+    'id': 'MyConfig',  // The id used for this instance of GM_config
+    'title': '智慧树助手 - 设置',  // Panel Title
+    'fields': {
+        'gxkEnable': {
+            'label': '在共享课上启用脚本',
+            'type': 'checkbox',
+            'default': true
+        },
+        'copyEnable': {
+            'label': '在章节测试/考试中解除复制封印',
+            'type': 'checkbox',
+            'default': true
+        },
+        'autoCopyEnable': {
+            'label': '在章节测试/考试中点击题目自动复制',
+            'type': 'checkbox',
+            'default': true
+        },
+        'abnormalStuckDetectionEnable': {
+            'label': '异常卡顿自动刷新',
+            'type': 'checkbox',
+            'default': true
+        },
+        'abnormalStuckDetectionLimit': {
+            'label': '异常卡顿超时时长（秒）',
+            'type': 'int',
+            'default': 10
+        },
+        'autoClosePopUpTest': {
+            'label': '自动关闭课程中的弹题测验',
+            'type': 'checkbox',
+            'default': true
+        },
+        'pauseResume': {
+            'label': '暂停自动恢复播放',
+            'type': 'checkbox',
+            'default': true
+        },
+        'autoMute': {
+            'label': '自动静音',
+            'type': 'checkbox',
+            'default': true
+        },
+        'auto15x': {
+            'label': '自动切换1.5倍速',
+            'type': 'checkbox',
+            'default': true
+        },
+        'autoBQ': {
+            'label': '自动切换标清',
+            'type': 'checkbox',
+            'default': true
+        },
+        'autoPlayNext': {
+            'label': '自动播放下一集',
+            'type': 'checkbox',
+            'default': true
+        },
+        'autoStop': {
+            'label': '自动停止播放',
+            'type': 'checkbox',
+            'default': false
+        },
+        'autoStopTime': {
+            'label': '多少分钟后停止播放',
+            'type': 'int',
+            'default': '30'
+        }
+    },
+    'events': {
+        'save': function () {
+            GM_config.close();
+            log("配置已保存");
+            location.reload(); // 刷新页面
+        },
+        'open': function (doc) {
+            // 翻译按钮文本
+            var config = this;
+            doc.getElementById(config.id + '_saveBtn').textContent = "确定";
+            doc.getElementById(config.id + '_closeBtn').textContent = "取消";
+            doc.getElementById(config.id + '_resetLink').textContent = "重置";
+            // 更改设置页面的宽度为屏幕的50%
+            $('iframe#' + config.id).css({
+                'width': '400px',
+                'left': (document.body.clientWidth - 450) + 'px',
+                'height': '450px',
+                'top': '80px',
+                'box-shadow': '0px 0px 15px grey',
+                'border': '0px',
+                'border-radius': '5px',
+                'background': '#F9F9F9',
+                //'padding': '0 20px'
+            });
+            myConfigState = true;
+        },
+        'close': function (doc) {
+            myConfigState = false;
+        }
+    },
+    'css': [
+        '#MyConfig { background: #F9F9F9; }',
+        '#MyConfig .saveclose_buttons { font-size: 14px; background: #3d84ff; border-radius: 14px; line-height: 24px; width: 82px; height: 28px; color: #FFF; border: none; cursor: pointer; }',
+        '#MyConfig .field_label { font-size: 14px; font-weight: bold; margin-right: 6px; }',
+        '#MyConfig .radio_label { font-size: 14px; }',
+        "#MyConfig .config_header { margin: 20px; }",
+        '#MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 75px; }',
+        '#MyConfig_wrapper { padding: 0 20px }',
+    ].join('\n') + '\n'
+}
+
+/**
+ * 在浏览器窗口大小改变时自动重新定位设置菜单
+ */
+window.onresize = function () {
+    // 监听窗口大小改变
+    if ($("iframe#MyConfig").css('left') !== undefined) {
+        $("iframe#MyConfig").css('left', (document.body.clientWidth - 450) + 'px');
+    }
+
+}
 
 /**
  * 获取浏览器名称
@@ -54,6 +179,25 @@ function explorerDetect() {
     else if (navigator.userAgent.indexOf("compatible") > -1 && navigator.userAgent.indexOf("MSIE") > -1 && !(navigator.userAgent.indexOf("Opera") > -1)) {
         return "IE";
     }
+}
+
+/**
+ * 获取 GM_config 中存储的用户自定义设置
+ */
+function init() {
+    gxkEnable = GM_config.get("gxkEnable");
+    copyEnable = GM_config.get("copyEnable");
+    autoCopyEnable = GM_config.get("autoCopyEnable");
+    abnormalStuckDetectionEnable = GM_config.get("abnormalStuckDetectionEnable");
+    abnormalStuckDetectionLimit = GM_config.get("abnormalStuckDetectionLimit");
+    autoClosePopUpTest = GM_config.get("autoClosePopUpTest");
+    pauseResume = GM_config.get("pauseResume");
+    autoMute = GM_config.get("autoMute");
+    auto15x = GM_config.get("auto15x");
+    autoBQ = GM_config.get("autoBQ");
+    autoPlayNext = GM_config.get("autoPlayNext");
+    autoStop = GM_config.get("autoStop");
+    autoStopTime = GM_config.get("autoStopTime");
 }
 
 /**
@@ -313,7 +457,7 @@ function autoCopy() {
         console.log($(this).text());
         let tmpInput = document.createElement('input');
         $(this).append(tmpInput)
-        tmpInput.value = $(this).text();  // 这里表示想要复制的内容
+        tmpInput.value = $(this).text();
         tmpInput.focus();
         tmpInput.select();
         if (document.execCommand('copy')) {
@@ -444,6 +588,8 @@ function oneShot() {
  */
 function mainLoop() {
     try {
+        init();
+        config_button_inject();
         if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && copyEnable) {
             //测试题
             copyEnabler();
@@ -474,6 +620,57 @@ function mainLoop() {
     }
 }
 
+/**
+ * 在页面中插入“脚本设置”按钮
+ */
+function config_button_inject() {
+    /**
+     * 点击“脚本设置”按钮时执行
+     */
+    function onConfig() {
+        if (!myConfigState) {
+            GM_config.open();
+        } else {
+            GM_config.save();
+        }
+    }
+    if ($('#myConfBtn').length == 0) {
+        if ($(".Patternbtn-div").length > 0) {
+            $(".Patternbtn-div").before([
+                '<div class="Patternbtn-div">',
+                '  <a id="myConfBtn">',
+                '    <svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">',
+                '      <path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF" fill-opacity="0.75">',
+                '      </path>',
+                '    </svg>',
+                '    <p>脚本设置</p>',
+                '  </a>',
+                '</div>'].join('\n'));
+            $("#myConfBtn").on("click", onConfig);
+        }
+
+        if ($("ul:has('.zhibo')").length > 0) {
+            $("ul:has('.zhibo')").children(":has('.zhibo.online-school')").before([
+                '<li>',
+                '  <a id="myConfBtn" class="zhibo" style="cursor: pointer;">',
+                '  脚本设置',
+                '  </a>',
+                '<\li>'].join('\n'));
+            $("#myConfBtn").on("click", onConfig);
+        }
+
+        if ($(".onlineSchool_link").length > 0) {
+            $(".onlineSchool_link").after([
+                '<div class="onlineSchool_link fr">',
+                '  <a id="myConfBtn" style="cursor: pointer;">',
+                '  脚本设置',
+                '  </a>',
+                '</div>'].join('\n'));
+            $("#myConfBtn").on("click", onConfig);
+        }
+    }
+}
+
 (function () {
     'use strict';
     const key = encodeURIComponent('EricKwok:智慧树助手');
@@ -483,6 +680,9 @@ function mainLoop() {
     }
     window[key] = true;
     window.onload = window.setInterval(mainLoop, (timeInterval * 1000));
+    GM_config.init(myConfig);  //使用 myConfig 初始化 GM_config 设置面板
+    init();
     oneShot();
     log("启动成功");
 })();
+

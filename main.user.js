@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.2.5
+// @version      1.2.6
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -453,8 +453,8 @@ function copyEnabler() {
  * 点击题目自动复制
  */
 function autoCopy() {
-    function _autoCopy() {
-        console.log($(this).text());
+    function _legacyCopy() {
+        console.log("legacy clipboard copy");
         let tmpInput = document.createElement('input');
         $(this).append(tmpInput)
         tmpInput.value = $(this).text();
@@ -471,6 +471,27 @@ function autoCopy() {
         setTimeout(function (elem) {
             elem.css("background-color", "#FFFFFF");
         }, 200, $(this));
+    }
+    function _autoCopy() {
+        console.log($(this).text());
+        if (navigator.clipboard && window.isSecureContext) {
+            console.log("navigator clipboard api method");
+            navigator.clipboard.writeText($(this).text())
+                .then(() => {
+                    console.log('复制成功');
+                    showDialog("复制成功！", 1, true, true);
+                    $(this).css("background-color", "#ECECEC");
+                    setTimeout(function (elem) {
+                        elem.css("background-color", "#FFFFFF");
+                    }, 200, $(this));
+                })
+                .catch(err => {
+                    console.log("Error occours, falling back to legacy copy method.")
+                    _legacyCopy();
+                })
+        } else {
+            _legacyCopy();
+        }
     }
     $('.subject_describe').on("click", _autoCopy);
     $('.smallStem_describe').on("click", _autoCopy);
@@ -504,38 +525,40 @@ function showDialog(msg, timeout, disable_header, disable_footer) {
         dialog_number = 0;
     else
         dialog_number++;
-    _html =
-        '<div class="el-dialog__body">' +
-        '      <div class="operate-dialog-1" id="DialogContent' + dialog_number + '">' +
-        '        <p>' + msg + '</p>' +
-        '      </div> ' +
-        '    </div>';
+    _html = `
+        <div class="el-dialog__body">
+            <div class="operate-dialog-1" id="DialogContent` + dialog_number + `">
+                <p>` + msg + `</p>
+            </div>
+        </div>
+    `;
     if (!disable_header) {
-        _html =
-            '    <div class="el-dialog__header">' +
-            '      <span class="el-dialog__title">✅智慧树助手提示您✅</span>' +
-            '      <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton' + dialog_number + '">' +
-            '        <i class="el-dialog__close el-icon el-icon-close"></i>' +
-            '      </button>' +
-            '    </div>' +
-            _html;
+        _html = `
+            <div class="el-dialog__header">
+                <span class="el-dialog__title">✅智慧树助手提示您✅</span>
+                <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton` + dialog_number + `">
+                    <i class="el-dialog__close el-icon el-icon-close"></i>
+                </button>
+            </div>
+        ` + _html;
     }
     if (!disable_footer) {
-        _html +=
-            '    <div class="el-dialog__footer">' +
-            '      <span class="dialog-footer">' +
-            '        <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton' + dialog_number + '">' +
-            '          <span id="confirm-btn">我知道了 (' + dialog_timeout + ')</span>' +
-            '        </button>' +
-            '      </span>' +
-            '    </div>'
+        _html += `
+            <div class="el-dialog__footer">
+                <span class="dialog-footer">
+                    <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton` + dialog_number + `">
+                        <span id="confirm-btn">我知道了 (` + dialog_timeout + `)</span>
+                    </button>
+                </span>
+            </div>`
     }
-    _html =
-        '<div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">' +
-        '  <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog' + dialog_number + '">' +
-        _html +
-        '  </div>' +
-        '</div>'
+    _html = `
+        <div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">
+            <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog` + dialog_number + `">
+    ` + _html + `
+            </div>
+        </div>
+    `
     $('#app').before(_html);
     $('#Dialog' + dialog_number).css('width', '400px')
     $('#DialogContent' + dialog_number).css({ "margin": "0 20px", "padding": "10px 0px 0px" });
@@ -636,36 +659,26 @@ function config_button_inject() {
     }
     if ($('#myConfBtn').length == 0) {
         if ($(".Patternbtn-div").length > 0) {
-            $(".Patternbtn-div").before([
-                '<div class="Patternbtn-div">',
-                '  <a id="myConfBtn">',
-                '    <svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">',
-                '      <path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF" fill-opacity="0.75">',
-                '      </path>',
-                '    </svg>',
-                '    <p>脚本设置</p>',
-                '  </a>',
-                '</div>'].join('\n'));
-            $("#myConfBtn").on("click", onConfig);
-        }
-
-        if ($("ul:has('.zhibo')").length > 0) {
-            $("ul:has('.zhibo')").children(":has('.zhibo.online-school')").before([
-                '<li>',
-                '  <a id="myConfBtn" class="zhibo" style="cursor: pointer;">',
-                '  脚本设置',
-                '  </a>',
-                '<\li>'].join('\n'));
+            $(".Patternbtn-div").before(`
+                <div class="Patternbtn-div">
+                    <a id="myConfBtn">
+                        <svg t="1606714930658" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2087" width="32" height="32">
+                        <path d="M477.87008 204.8h68.25984v85.32992h-68.25984zM614.4 341.32992H409.6V409.6h68.27008v409.6h68.25984V409.6H614.4zM273.07008 204.8h68.25984v221.87008h-68.25984zM409.6 477.87008H204.8v68.27008h68.27008V819.2h68.25984V546.14016H409.6zM682.67008 204.8h68.25984v358.4h-68.25984zM819.2 614.4H614.4v68.25984h68.27008V819.2h68.25984V682.65984H819.2z" p-id="2088" fill="#FFFFFF" fill-opacity="0.75">
+                        </path>
+                        </svg>
+                        <p>脚本设置</p>
+                    </a>
+                </div>`);
             $("#myConfBtn").on("click", onConfig);
         }
 
         if ($(".onlineSchool_link").length > 0) {
-            $(".onlineSchool_link").after([
-                '<div class="onlineSchool_link fr">',
-                '  <a id="myConfBtn" style="cursor: pointer;">',
-                '  脚本设置',
-                '  </a>',
-                '</div>'].join('\n'));
+            $(".onlineSchool_link").after(`
+                <div class="onlineSchool_link fr">
+                    <a id="myConfBtn" style="cursor: pointer;">
+                    脚本设置
+                    </a>
+                </div>`);
             $("#myConfBtn").on("click", onConfig);
         }
     }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课挂机刷课助手（无配置界面）
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.0
+// @version      1.0.1
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
@@ -314,8 +314,8 @@ function copyEnabler() {
  * 点击题目自动复制
  */
 function autoCopy() {
-    function _autoCopy() {
-        console.log($(this).text());
+    function _legacyCopy() {
+        console.log("legacy clipboard copy");
         let tmpInput = document.createElement('input');
         $(this).append(tmpInput)
         tmpInput.value = $(this).text();
@@ -332,6 +332,27 @@ function autoCopy() {
         setTimeout(function (elem) {
             elem.css("background-color", "#FFFFFF");
         }, 200, $(this));
+    }
+    function _autoCopy() {
+        console.log($(this).text());
+        if (navigator.clipboard && window.isSecureContext) {
+            console.log("navigator clipboard api method");
+            navigator.clipboard.writeText($(this).text())
+                .then(() => {
+                    console.log('复制成功');
+                    showDialog("复制成功！", 1, true, true);
+                    $(this).css("background-color", "#ECECEC");
+                    setTimeout(function (elem) {
+                        elem.css("background-color", "#FFFFFF");
+                    }, 200, $(this));
+                })
+                .catch(err => {
+                    console.log("Error occours, falling back to legacy copy method.")
+                    _legacyCopy();
+                })
+        } else {
+            _legacyCopy();
+        }
     }
     $('.subject_describe').on("click", _autoCopy);
     $('.smallStem_describe').on("click", _autoCopy);
@@ -365,38 +386,40 @@ function showDialog(msg, timeout, disable_header, disable_footer) {
         dialog_number = 0;
     else
         dialog_number++;
-    _html =
-        '<div class="el-dialog__body">' +
-        '      <div class="operate-dialog-1" id="DialogContent' + dialog_number + '">' +
-        '        <p>' + msg + '</p>' +
-        '      </div> ' +
-        '    </div>';
+    _html = `
+        <div class="el-dialog__body">
+            <div class="operate-dialog-1" id="DialogContent` + dialog_number + `">
+                <p>` + msg + `</p>
+            </div>
+        </div>
+    `;
     if (!disable_header) {
-        _html =
-            '    <div class="el-dialog__header">' +
-            '      <span class="el-dialog__title">✅智慧树助手提示您✅</span>' +
-            '      <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton' + dialog_number + '">' +
-            '        <i class="el-dialog__close el-icon el-icon-close"></i>' +
-            '      </button>' +
-            '    </div>' +
-            _html;
+        _html = `
+            <div class="el-dialog__header">
+                <span class="el-dialog__title">✅智慧树助手提示您✅</span>
+                <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton` + dialog_number + `">
+                    <i class="el-dialog__close el-icon el-icon-close"></i>
+                </button>
+            </div>
+        ` + _html;
     }
     if (!disable_footer) {
-        _html +=
-            '    <div class="el-dialog__footer">' +
-            '      <span class="dialog-footer">' +
-            '        <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton' + dialog_number + '">' +
-            '          <span id="confirm-btn">我知道了 (' + dialog_timeout + ')</span>' +
-            '        </button>' +
-            '      </span>' +
-            '    </div>'
+        _html += `
+            <div class="el-dialog__footer">
+                <span class="dialog-footer">
+                    <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton` + dialog_number + `">
+                        <span id="confirm-btn">我知道了 (` + dialog_timeout + `)</span>
+                    </button>
+                </span>
+            </div>`
     }
-    _html =
-        '<div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">' +
-        '  <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog' + dialog_number + '">' +
-        _html +
-        '  </div>' +
-        '</div>'
+    _html = `
+        <div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">
+            <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog` + dialog_number + `">
+    ` + _html + `
+            </div>
+        </div>
+    `
     $('#app').before(_html);
     $('#Dialog' + dialog_number).css('width', '400px')
     $('#DialogContent' + dialog_number).css({ "margin": "0 20px", "padding": "10px 0px 0px" });

@@ -318,7 +318,7 @@ function autoCopy() {
         console.log($(this).text());
         let tmpInput = document.createElement('input');
         $(this).append(tmpInput)
-        tmpInput.value = $(this).text();  // 这里表示想要复制的内容
+        tmpInput.value = $(this).text();
         tmpInput.focus();
         tmpInput.select();
         if (document.execCommand('copy')) {

@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课挂机刷课助手（无配置界面）
 // @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
-// @version      1.0.1
+// @version      1.2.7
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/zhihuishu_reload
 // @supportURL   https://github.com/the-eric-kwok/zhihuishu_reload/issues
+// @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js
 // @match        *://studyh5.zhihuishu.com/videoStudy*
 // @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
 // @run-at       document-end
@@ -191,7 +192,7 @@ async function closePopUpTest() {
         var topic_item = $('.topic-item');
         var guess_answer = parseInt(Math.random() * topic_item.length);
         topic_item[guess_answer].click();
-        await sleep();
+        await sleep(1000);
         var guess_char = 'ABCD'[guess_answer];
         //随机点击一个选项
         var answer = $('.answer').children().text();
@@ -199,15 +200,16 @@ async function closePopUpTest() {
         if (answer.indexOf('A') !== -1 && answer.indexOf(guess_char) === -1) {
             topic_item[0].click();
         }
-        if (answer.indexOf('B') !== -1 && answer.indexOf(guess_char) === -1) {
+        else if (answer.indexOf('B') !== -1 && answer.indexOf(guess_char) === -1) {
             topic_item[1].click();
         }
-        if (answer.indexOf('C') !== -1 && answer.indexOf(guess_char) === -1) {
+        else if (answer.indexOf('C') !== -1 && answer.indexOf(guess_char) === -1) {
             topic_item[2].click();
         }
-        if (answer.indexOf('D') !== -1 && answer.indexOf(guess_char) === -1) {
+        else if (answer.indexOf('D') !== -1 && answer.indexOf(guess_char) === -1) {
             topic_item[3].click();
         }
+        await sleep(1000);
         pop_up.find('div.btn').click();
         log(
             "为您跳过弹题测验，" +
@@ -300,14 +302,29 @@ function stuckDetector() {
  * 强制允许复制
  */
 function copyEnabler() {
-    if (document.onselectstart !== null) {
-        log('强制复制');
-        document.oncontextmenu = null;
-        document.onpaste = null;
-        document.oncopy = null;
-        document.oncut = null;
-        document.onselectstart = null;
+    log('强制复制');
+    function hackItem(item) {
+        item.onpaste = () => true;
+        item.oncontextmenu = () => true;
+        item.onselectstart = () => true;
+        item.ondragstart = () => true;
+        item.oncopy = () => true;
+        item.onbeforecopy = () => true;
+        Object.defineProperty(item, 'onpaste', { get: () => false })
+        Object.defineProperty(item, 'oncontextmenu', { get: () => false })
+        Object.defineProperty(item, 'onselectstart', { get: () => false })
+        Object.defineProperty(item, 'ondragstart', { get: () => false })
+        Object.defineProperty(item, 'oncopy', { get: () => false })
+        Object.defineProperty(item, 'onbeforecopy', { get: () => false })
     }
+    function hackClass(className) {
+        for (const i of document.getElementsByClassName(className)) {
+            hackItem(i);
+        }
+    }
+    hackClass("subject_describe");
+    hackItem(document.body);
+    hackItem(document);
 }
 
 /**
@@ -315,7 +332,7 @@ function copyEnabler() {
  */
 function autoCopy() {
     function _legacyCopy() {
-        console.log("legacy clipboard copy");
+        log("正在使用传统方法复制");
         let tmpInput = document.createElement('input');
         $(this).append(tmpInput)
         tmpInput.value = $(this).text();
@@ -325,29 +342,29 @@ function autoCopy() {
             document.execCommand('copy');
         }
         tmpInput.blur();
-        console.log('复制成功');
+        log('复制成功');
         $(tmpInput).remove();
-        showDialog("复制成功！", 1, true, true);
+        showDialog("复制成功！", 0, true, true);
         $(this).css("background-color", "#ECECEC");
         setTimeout(function (elem) {
             elem.css("background-color", "#FFFFFF");
         }, 200, $(this));
     }
     function _autoCopy() {
-        console.log($(this).text());
+        log("题目内容：" + $(this).text());
         if (navigator.clipboard && window.isSecureContext) {
-            console.log("navigator clipboard api method");
+            log("正在使用 navigator clipboard api 进行复制操作");
             navigator.clipboard.writeText($(this).text())
                 .then(() => {
-                    console.log('复制成功');
-                    showDialog("复制成功！", 1, true, true);
+                    log('复制成功');
+                    showDialog("复制成功！", 0, true, true);
                     $(this).css("background-color", "#ECECEC");
                     setTimeout(function (elem) {
                         elem.css("background-color", "#FFFFFF");
                     }, 200, $(this));
                 })
                 .catch(err => {
-                    console.log("Error occours, falling back to legacy copy method.")
+                    log("navigator clipboard api 复制时出错，将使用传统方法进行复制")
                     _legacyCopy();
                 })
         } else {
@@ -371,24 +388,23 @@ var dialog_number = 0;  // 弹窗编号
 var dialog_timeout = 5;  // 弹窗自动关闭倒计时
 /**
  * 显示提示信息弹窗
- * @param {String} msg 弹窗内消息内容
- * @param {number} timeout 弹窗自动收起的超时时间（秒），默认为 5
- * @param {boolean} disable_header 不显示对话框标题栏，默认为 false
- * @param {boolean} disable_footer 不显示对话框按钮栏，默认为 false
+ * @param msg 弹窗内消息内容
+ * @param timeout 弹窗自动收起的超时时间（秒），默认为 3，最小为 1
+ * @param disable_header 不显示对话框标题栏，默认为 false
+ * @param disable_footer 不显示对话框按钮栏，默认为 false
  */
-function showDialog(msg, timeout, disable_header, disable_footer) {
+function showDialog(msg, timeout = 3, disable_header = false, disable_footer = false) {
     msg = msg || "默认消息内容";
-    timeout = timeout || 5;
-    disable_header = disable_header || false;
-    disable_footer = disable_footer || false;
-    dialog_timeout = timeout;
-    if (!dialog_number)
-        dialog_number = 0;
-    else
-        dialog_number++;
-    _html = `
+    dialog_timeout = timeout - 1;
+    var dialogId = {
+        DialogContent: getRandString(getRandInt(5, 20)),
+        DialogCloseButton: getRandString(getRandInt(5, 20)),
+        DialogConfirmButton: getRandString(getRandInt(5, 20)),
+        Dialog: getRandString(getRandInt(5, 20)),
+    }
+    var _html = `
         <div class="el-dialog__body">
-            <div class="operate-dialog-1" id="DialogContent` + dialog_number + `">
+            <div class="operate-dialog-1" id="` + dialogId.DialogContent + `">
                 <p>` + msg + `</p>
             </div>
         </div>
@@ -396,8 +412,8 @@ function showDialog(msg, timeout, disable_header, disable_footer) {
     if (!disable_header) {
         _html = `
             <div class="el-dialog__header">
-                <span class="el-dialog__title">✅智慧树助手提示您✅</span>
-                <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="DialogCloseButton` + dialog_number + `">
+                <span class="el-dialog__title">提示</span>
+                <button type="button" aria-label="Close" class="el-dialog__headerbtn" id="` + dialogId.DialogCloseButton + `">
                     <i class="el-dialog__close el-icon el-icon-close"></i>
                 </button>
             </div>
@@ -407,7 +423,7 @@ function showDialog(msg, timeout, disable_header, disable_footer) {
         _html += `
             <div class="el-dialog__footer">
                 <span class="dialog-footer">
-                    <button type="button" class="el-button btn el-button--primary" id="DialogConfirmButton` + dialog_number + `">
+                    <button type="button" class="el-button btn el-button--primary" id="` + dialogId.DialogConfirmButton + `">
                         <span id="confirm-btn">我知道了 (` + dialog_timeout + `)</span>
                     </button>
                 </span>
@@ -415,19 +431,24 @@ function showDialog(msg, timeout, disable_header, disable_footer) {
     }
     _html = `
         <div class="el-dialog__wrapper dialog-tips" style="z-index: 2001;">
-            <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="Dialog` + dialog_number + `">
+            <div role="dialog" aria-modal="true" aria-label="提示" class="el-dialog" style="margin-top: 15vh;" id="` + dialogId.Dialog + `">
     ` + _html + `
             </div>
         </div>
     `
     $('#app').before(_html);
-    $('#Dialog' + dialog_number).css('width', '400px')
-    $('#DialogContent' + dialog_number).css({ "margin": "0 20px", "padding": "10px 0px 0px" });
+
+    /**
+     * 关闭弹窗
+     */
     function closeDialog() {
         $('.dialog-tips').remove()
     }
-    $('#DialogCloseButton' + dialog_number).on('click', closeDialog);
-    $('#DialogConfirmButton' + dialog_number).on('click', closeDialog);
+
+    $('#' + dialogId.Dialog).css('width', '400px')
+    $('#' + dialogId.DialogContent).css({ "margin": "0 20px", "padding": "10px 0px 0px" });
+    $('#' + dialogId.DialogCloseButton).on('click', closeDialog);
+    $('#' + dialogId.DialogConfirmButton).on('click', closeDialog);
     /**
      * 超时后自动关闭弹窗
      */
@@ -444,72 +465,90 @@ function showDialog(msg, timeout, disable_header, disable_footer) {
 }
 
 /**
- * 一些仅在加载完成后执行一次的功能
+ * 生成随机字符串
+ * @param len: 字符串长度
+ * @returns `string`
  */
-function oneShot() {
-    if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1
-        && (window.location.href.indexOf("dohomework") !== -1 || window.location.href.indexOf("doexamination") !== -1)
-        && autoCopyEnable) {
-        //测试题
-        setTimeout(showDialog, 1000, '点击题目可以一键复制噢～');
-        var autocp = setInterval(function () {
-            if ($('.subject_describe').length > 0) {
-                autoCopy();
-                log('自动复制已启用');
-                clearInterval(autocp);
-            }
-        }, 1000);
+function getRandString(len = 10) {
+    const str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let ret = "";
+    for (let i = 0; i < len; i++) {
+        ret += str.charAt(Math.floor(Math.random() * str.length));
     }
-    if (explorerDetect() === 'Safari'
-        && window.location.href.indexOf("studyh5.zhihuishu.com") !== -1
-        && autoMute == false) {
-        window.setTimeout(showDialog, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
-    }
+    return ret
 }
 
 /**
- * 主循环
+ * 生成范围内随机数
+ * @param min: 最小值
+ * @param max: 最大值
+ * @returns `number`
  */
-function mainLoop() {
-    try {
-        if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1 && copyEnable) {
-            //测试题
-            copyEnabler();
-        }
-        else if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable) {
-            //共享课
-            if ($(".controlsBar").length > 0) {
-                //log("视频正常加载");
-                autoSwitch15x();
-                autoSwitchBQ();
-                autoSwitchMute();
-                closeTips();
-                closePopUpTest();
-                progressBarMonitor();
-                pauseDetector();
-                stuckDetector();
-                if (autoStop && (new Date().getTime() - startTime > autoStopTime * 60 * 1000)) {
-                    backToMenu();
-                }
-            } else {
-                //log("视频未加载");
-                stuckDetector();
-            }
-        }
-    }
-    catch (err) {
-        console.log(dateTime(), err.message);
-    }
+function getRandInt(min, max) {
+    return parseInt(Math.random() * (max - min + 1) + min, 10)
 }
+
 
 (function () {
     'use strict';
-    const key = encodeURIComponent('EricKwok:智慧树助手');
-    if (window[key]) {
-        //保证脚本只被加载一次
-        return;
+    /**
+     * 一些仅在加载完成后执行一次的功能
+     */
+    function oneShot() {
+        if (window.location.href.indexOf("onlineexamh5new.zhihuishu.com") !== -1
+            && (window.location.href.indexOf("dohomework") !== -1 || window.location.href.indexOf("doexamination") !== -1)) {
+            //测试题
+            if (autoCopyEnable) {
+                setTimeout(alert, 1000, '点击题目可以一键复制噢');
+                var autocp = setInterval(function () {
+                    if ($('.subject_describe').length > 0) {
+                        autoCopy();
+                        log('自动复制已启用');
+                        clearInterval(autocp);
+                    }
+                }, 1000);
+            }
+            if (copyEnable) {
+                copyEnabler();
+            }
+        }
+        if (explorerDetect() === 'Safari'
+            && window.location.href.indexOf("studyh5.zhihuishu.com") !== -1
+            && autoMute == false) {
+            window.setTimeout(alert, 1000, "由于Safari的限制，不允许视频自动播放，因此使用此脚本的自动播放功能时必须启用自动静音功能");
+        }
     }
-    window[key] = true;
+
+    /**
+     * 主循环
+     */
+    function mainLoop() {
+        try {
+            if (window.location.href.indexOf("studyh5.zhihuishu.com") !== -1 && gxkEnable) {
+                //共享课
+                if ($(".controlsBar").length > 0) {
+                    //log("视频正常加载");
+                    autoSwitch15x();
+                    autoSwitchBQ();
+                    autoSwitchMute();
+                    closeTips();
+                    closePopUpTest();
+                    progressBarMonitor();
+                    pauseDetector();
+                    stuckDetector();
+                    if (autoStop && (new Date().getTime() - startTime > autoStopTime * 60 * 1000)) {
+                        backToMenu();
+                    }
+                } else {
+                    //log("视频未加载");
+                    stuckDetector();
+                }
+            }
+        }
+        catch (err) {
+            console.log(dateTime(), err.message);
+        }
+    }
     window.onload = window.setInterval(mainLoop, (timeInterval * 1000));
     oneShot();
     log("启动成功");

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         [Reload]智慧树共享课挂机刷课助手
-// @namespace    https://github.com/the-eric-kwok/zhihuishu_reload
+// @namespace    https://github.com/the-eric-kwok/my_userscripts
 // @version      1.2.9
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默

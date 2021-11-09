@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.2
+// @version      0.3
 // @description  老婆专用的启信宝增强插件
 // @author       最爱你的老公
 // @match        https://*.qixin.com/*
@@ -66,11 +66,17 @@ function copyMe(str) {
 
 /**
  * Add copy info button to page.
+ * @param {string} companyName Company name which will be copid to clipboard when button clicked
  * @param {string} telephone Telephone number which will be copid to clipboard when button clicked
  * @param {string} address Company address which will be copid to clipboard when button clicked
  * @param {string} senior Senior executive of company which will be copid to clipboard when button clicked
  */
-function addBtns(telephone, address, senior) {
+function addBtns(companyName, telephone, address, senior) {
+    if (arguments.length < 4) {
+        console.error("Arguments of function addBtns not match, should be exactly 4 args.");
+        errorAlert("Arguments of function addBtns not match, should be exactly 4 args.")
+        return;
+    }
     var companyCase;
     if (location.href.includes("qixin.com/publicly"))
         companyCase = 'publicy';
@@ -86,31 +92,47 @@ function addBtns(telephone, address, senior) {
         'hk_company': 'label label-yellow font-12',
         'default': ''
     };
-    let _btnHtml = `<a id="copy_tel" class="${_class[companyCase]}">复制电话</a><a id="copy_add" class="${_class[companyCase]}">复制地址</a><a id="copy_sen" class="${_class[companyCase]}">复制高管信息</a>`;
+    let ids = ["copy_com", "copy_tel", "copy_add", "copy_sen"];
+    let items = ["公司名称", "电话", "地址", "高管信息"];
+    var _btnHtml = ""
+    for (var i = 0; i < arguments.length; i++) {
+        if (arguments && arguments[i].length > 0) {
+            _btnHtml += `<a id="${ids[i]}" class="${_class[companyCase]}">复制${items[i]}</a>`;
+        }
+    }
     if (document.querySelector(".app-head-basic"))
         document.querySelector(".app-head-basic").querySelector(".claim-tag").insertAdjacentHTML("afterend", _btnHtml);
     else if (document.querySelector(".company-name"))
         document.querySelector(".company-name").insertAdjacentHTML("afterend", _btnHtml);
     else if (document.querySelector(".title"))
         document.querySelector(".title").insertAdjacentHTML("beforeend", _btnHtml)
-    document.getElementById("copy_tel").onclick = function () {
-        copyMe(telephone);
-        var originalText = document.getElementById("copy_tel").innerText;
-        document.getElementById("copy_tel").innerText = "✅复制成功！";
-        setTimeout(() => document.getElementById("copy_tel").innerText = originalText, 1000);
+    for (var i = 0; i < arguments.length; i++) {
+        if (arguments[i].length > 0) {
+            let _args = arguments;
+            let _i = i;
+            document.getElementById(ids[_i]).onclick = function () {
+                copyMe(_args[_i]);
+                var originalText = document.getElementById(ids[_i]).innerText;
+                document.getElementById(ids[_i]).innerText = "✅复制成功！";
+                setTimeout(() => document.getElementById(ids[_i]).innerText = originalText, 1000);
+            }
+        }
     }
-    document.getElementById("copy_add").onclick = function () {
-        copyMe(address);
-        var originalText = document.getElementById("copy_add").innerText;
-        document.getElementById("copy_add").innerText = "✅复制成功！";
-        setTimeout(() => document.getElementById("copy_add").innerText = originalText, 1000);
+}
+
+/**
+ * 生成范围内随机数
+ * @param {int} min: 最小值
+ * @param {int} max: 最大值
+ * @returns `number`
+ */
+function randBetween(min, max) {
+    if (min > max) {
+        var tmp = max;
+        max = min;
+        min = tmp;
     }
-    document.getElementById("copy_sen").onclick = function () {
-        copyMe(senior);
-        var originalText = document.getElementById("copy_sen").innerText;
-        document.getElementById("copy_sen").innerText = "✅复制成功！";
-        setTimeout(() => document.getElementById("copy_sen").innerText = originalText, 1000);
-    }
+    return parseInt(Math.random() * (max - min + 1) + min, 10)
 }
 
 /**
@@ -118,7 +140,12 @@ function addBtns(telephone, address, senior) {
  * @param {string} msg Message to be shown in error message
  */
 function errorAlert(msg) {
-    alert(`脚本出问题啦，拍个照发给老公修复噢～\n出问题的网址是：${location.href}\n错误信息：${msg}`);
+    var loveLetter = [
+        "你老公又在写 bug 了！赶紧拍个照告诉他！",
+        "脚本出问题啦，拍个照发给老公修复噢～",
+        "绝对不是脚本的问题！肯定是启信网更改了页面排版！不管怎么说还是拍个照告诉老公吧～",
+    ];
+    alert(`${loveLetter[randBetween(0, loveLetter.length - 1)]}\n出问题的网址是：${location.href}\n错误信息：${msg}`);
 }
 
 function loveUxxx() {
@@ -150,18 +177,23 @@ function loveUxxx() {
         removeAd(".app-favorite-tip");
         loveUxxx();
 
-        if (location.href.includes("qixin.com/publicly")) {
-            var telephone = "";
-            var address = "";
-            var senior = "";
+        var companyName = "";
+        var telephone = "";
+        var address = "";
+        var senior = "";
 
+        if (location.href.includes("qixin.com/publicly/") || location.href.includes("qixin.com/company/")) {
             // 从「head」栏中读取
             if (document.querySelector(".phone-valid")) {
                 var telElem = document.querySelector(".phone-valid").parentElement.getElementsByClassName("span-info");
                 if (telElem.length > 0) {
                     telephone = telElem[0].innerText.trim();
                 } else errorAlert("Telephone number inside header not found.");
-            } else console.error("HTML class \".phone-valid\" not found");
+            } else console.log("HTML class \".phone-valid\" not found")
+            if (document.querySelector(".company-name")) {
+                companyName = document.querySelector(".company-name").innerText;
+                console.log("name: " + companyName);
+            } else console.log("HTML class \".company-name\" not found")
 
             // 从「企业概况」栏中读取
             if (document.getElementById("overview")) {
@@ -170,16 +202,19 @@ function loveUxxx() {
                     var rows = table[0].rows;
                     for (var row of rows) {
                         for (var i = 0; i < row.cells.length; i++) {
-                            if (row.cells[i].innerHTML.includes("联系电话")) {
-                                telephone += (telephone.length == 0 ? "" : ',') + row.cells[i + 1].innerHTML.trim();
-                            }
                             if (row.cells[i].innerHTML.includes("地址")) {
-                                address = row.cells[i + 1].innerHTML.trim();
+                                address = (address.length > 0) ? address : row.cells[i + 1].innerText.replace("查看地图", "").replace("附近企业", "").trim();
+                            }
+                            else if (row.cells[i].innerHTML.includes("企业名称")) {
+                                companyName = (companyName.length > 0) ? companyName : row.cells[i + 1].innerText.trim();
+                            }
+                            else if (row.cells[i].innerHTML.includes("联系电话")) {
+                                telephone += (telephone.length == 0 ? "" : ',') + row.cells[i + 1].innerHTML.trim();
                             }
                         }
                     }
                 } else errorAlert("Table inside #overview element not found.");
-            } else console.error("HTML element id \"overview\" not found");
+            } else console.log("HTML element id \"overview\" not found");
 
             // 从「高管信息」栏中读取
             if (document.getElementById("employee")) {
@@ -199,22 +234,7 @@ function loveUxxx() {
                     }
                     senior = senior.substring(0, senior.length - 1);
                 } else errorAlert("Table inside #employee element not found.");
-            } else console.error("HTML element id \"employee\" not found");
-
-            addBtns(telephone, address, senior);
-        }
-        else if (location.href.includes("qixin.com/company/") && (!document.querySelector(".info-hk"))) {
-            var telephone = "";
-            var address = "";
-            var senior = "";
-
-            // 从「head」栏中读取
-            if (document.querySelector(".phone-valid")) {
-                var telElem = document.querySelector(".phone-valid").parentElement.getElementsByClassName("span-info");
-                if (telElem.length > 0) {
-                    telephone = telElem[0].innerText.trim();
-                } else errorAlert("Telephone number inside header not found.");
-            } else console.error("HTML class \".phone-valid\" not found")
+            } else console.log("HTML element id \"employee\" not found");
 
             // 从「工商信息」栏中读取
             if (document.getElementById("icinfo")) {
@@ -232,7 +252,7 @@ function loveUxxx() {
                         }
                     }
                 } else errorAlert("Table inside #icinfo element not found.");
-            } else console.error("HTML element id \"icinfo\" not found");
+            } else console.log("HTML element id \"icinfo\" not found");
 
             // 从「主要人员」栏中读取
             if (document.getElementById("employees")) {
@@ -251,26 +271,9 @@ function loveUxxx() {
                     }
                     senior = senior.substring(0, senior.length - 1);
                 } else errorAlert("Table inside #employees element not found.");
-            } else console.error("HTML element id \"employees\" not found");
+            } else console.log("HTML element id \"employees\" not found");
 
-            addBtns(telephone, address, senior);
-
-        }
-        else if (document.querySelector(".info-hk")) {
-            console.log("HongKong company");
-            var telephone = "";
-            var address = "";
-            var senior = "";
-
-            // 从「head」栏中读取
-            if (document.querySelector(".phone-valid")) {
-                var telElem = document.querySelector(".phone-valid").parentElement.getElementsByClassName("span-info");
-                if (telElem.length > 0) {
-                    telephone = telElem[0].innerText.trim();
-                } else errorAlert("Telephone number inside header not found.");
-            } else console.error("HTML class \".phone-valid\" not found")
-
-            // 从「企业概况」栏中读取
+            // 从「企业概况」栏中读取（香港公司）
             if (document.getElementById("appHkOverview")) {
                 var table = document.getElementById("appHkOverview").getElementsByTagName("tbody");
                 if (table.length > 0) {
@@ -278,7 +281,10 @@ function loveUxxx() {
                     for (var row of rows) {
                         for (var i = 0; i < row.cells.length; i++) {
                             if (row.cells[i].innerHTML.includes("地址")) {
-                                address = row.cells[i + 1].innerText.replace("查看地图", "").replace("附近企业", "").trim();
+                                address = (address.length > 0) ? address : row.cells[i + 1].innerText.replace("查看地图", "").replace("附近企业", "").trim();
+                            }
+                            else if (row.cells[i].innerHTML.includes("企业名称")) {
+                                companyName = (companyName.length > 0) ? companyName : row.cells[i + 1].innerText.trim();
                             }
                             else if (row.cells[i].innerHTML.includes("联系电话")) {
                                 telephone += (telephone.length == 0 ? "" : ',') + row.cells[i + 1].innerHTML.trim();
@@ -286,9 +292,9 @@ function loveUxxx() {
                         }
                     }
                 } else errorAlert("Table inside #appHkOverview element not found.");
-            } else console.error("HTML element id \"icinfo\" not found");
+            } else console.log("HTML element id \"icinfo\" not found");
 
-            // 从「高管信息」栏中读取
+            // 从「高管信息」栏中读取（香港公司）
             if (document.getElementById("hkExecutive")) {
                 table = document.getElementById("hkExecutive").getElementsByTagName("tbody");
                 if (table.length > 0) {
@@ -306,13 +312,13 @@ function loveUxxx() {
                     }
                     senior = senior.substring(0, senior.length - 1);
                 } else errorAlert("Table inside #hkExecutive element not found.");
-            } else console.error("HTML element id \"employees\" not found");
-
-            addBtns(telephone, address, senior);
+            } else console.log("HTML element id \"employees\" not found");
+            addBtns(companyName, telephone, address, senior);
         }
+
         // TODO: ✅ https://www.qixin.com/company/52b5f944-7ca9-11e7-a0bd-00163e1251d8
         // TODO: ✅ 增加复制提示
-        // TODO: 增加企业名称复制
+        // TODO: ✅ 增加企业名称复制
         // TODO: 删除职位括号内内容，“,?其他人员,?” -> ","
         // TODO: 职位增加筛选，去除仅为“董事”的人物
 

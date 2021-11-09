@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.3
+// @version      0.4
 // @description  老婆专用的启信宝增强插件
 // @author       最爱你的老公
 // @match        https://*.qixin.com/*
@@ -94,7 +94,7 @@ function addBtns(companyName, telephone, address, senior) {
     };
     let ids = ["copy_com", "copy_tel", "copy_add", "copy_sen"];
     let items = ["公司名称", "电话", "地址", "高管信息"];
-    var _btnHtml = ""
+    var _btnHtml = (companyCase === 'hk_company') ? "" : "<br>";
     for (var i = 0; i < arguments.length; i++) {
         if (arguments && arguments[i].length > 0) {
             _btnHtml += `<a id="${ids[i]}" class="${_class[companyCase]}">复制${items[i]}</a>`;
@@ -182,6 +182,15 @@ function loveUxxx() {
         var address = "";
         var senior = "";
 
+        // 替换分隔符
+        let delimiter = /[、，。\/\\\.,兼]/g;
+        // 需要排除的职位（匹配「其他人员」「xx董事」「董事」「xx委员xx」，但不匹配「董事长」、「董事会」等）
+        let job = /其他人员[,\s]|[^,\s]*董事[,\s]|[^,\s]*董事$|[^,\s]*委员[^,\s]*[,\s]?/g;
+        // 将职位括号内内容删除
+        let quote = /（.*?）|\(.*?\)/g;
+        // 删除开头或末尾的分隔符
+        let commaAtBeginingOrEnd = /^\s*,|,\s*$/g;
+
         if (location.href.includes("qixin.com/publicly/") || location.href.includes("qixin.com/company/")) {
             // 从「head」栏中读取
             if (document.querySelector(".phone-valid")) {
@@ -225,10 +234,13 @@ function loveUxxx() {
                         let row = rows[j];
                         for (var i = 0, count = 0; i < row.cells.length && count < 4; i++) {
                             if (row.cells[i].innerHTML.includes("姓名")) {
-                                senior += row.cells[i + 1].innerText.replace("查看简历", "").trim() + ":";
-                                senior += rows[j + 1].cells[i + 1].innerText.trim().replace(/[、，。.,]/g, ",");
-                                senior += "、";
-                                count++;
+                                var _job = rows[j + 1].cells[i + 1].innerText.trim().replace(/\s/g, "").replace(delimiter, ",").replace(job, "").replace(quote, "").replace(commaAtBeginingOrEnd, "");
+                                if (_job.length > 0) {
+                                    senior += row.cells[i + 1].innerText.replace("查看简历", "").trim() + ":";
+                                    senior += _job;
+                                    senior += "、";
+                                    count++;
+                                }
                             }
                         }
                     }
@@ -263,9 +275,12 @@ function loveUxxx() {
                         for (var i = 0; i < row.cells.length; i++) {
                             if (row.cells[i].innerHTML.includes("ent-name")) {
                                 var name = row.cells[i].querySelector(".ent-name").querySelector("a");
-                                senior += name.innerText.trim() + ":";
-                                senior += row.cells[i + 1].innerText.trim().replace(/[、，。.,]/g, ",");
-                                senior += "、";
+                                var _job = row.cells[i + 1].innerText.trim().replace(/\s/g, "").replace(delimiter, ",").replace(job, "").replace(quote, "").replace(commaAtBeginingOrEnd, "");
+                                if (_job.length > 0) {
+                                    senior += name.innerText.trim() + ":";
+                                    senior += _job;
+                                    senior += "、";
+                                }
                             }
                         }
                     }
@@ -303,10 +318,13 @@ function loveUxxx() {
                         let row = rows[j];
                         for (var i = 0, count = 0; i < row.cells.length && count < 4; i++) {
                             if (row.cells[i].innerHTML.includes("姓名")) {
-                                senior += row.cells[i + 1].innerText.replace("查看简历", "").trim() + ":";
-                                senior += rows[j + 1].cells[i + 1].innerText.trim().replace(/[、，。.,]/g, ",");
-                                senior += "、";
-                                count++;
+                                var _job = rows[j + 1].cells[i + 1].innerText.trim().replace(/\s/g, "").replace(delimiter, ",").replace(job, "").replace(quote, "").replace(commaAtBeginingOrEnd, "");
+                                if (_job.length > 0) {
+                                    senior += row.cells[i + 1].innerText.replace("查看简历", "").trim() + ":";
+                                    senior += _job;
+                                    senior += "、";
+                                    count++;
+                                }
                             }
                         }
                     }
@@ -315,13 +333,6 @@ function loveUxxx() {
             } else console.log("HTML element id \"employees\" not found");
             addBtns(companyName, telephone, address, senior);
         }
-
-        // TODO: ✅ https://www.qixin.com/company/52b5f944-7ca9-11e7-a0bd-00163e1251d8
-        // TODO: ✅ 增加复制提示
-        // TODO: ✅ 增加企业名称复制
-        // TODO: 删除职位括号内内容，“,?其他人员,?” -> ","
-        // TODO: 职位增加筛选，去除仅为“董事”的人物
-
     }, 1000);
 
 })();

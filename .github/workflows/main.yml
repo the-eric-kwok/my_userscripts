@@ -1,5 +1,5 @@
 name: Sync To Gitee
-on: push
+on: [ push, delete, create ]
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -8,5 +8,5 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
         with:
-          source-repo: "git@github.com:the-eric-kwok/my_userscripts.git"
+          source-repo: "https://github.com/the-eric-kwok/my_userscripts.git"
           destination-repo: "git@gitee.com:erickwok404/my_userscripts.git"

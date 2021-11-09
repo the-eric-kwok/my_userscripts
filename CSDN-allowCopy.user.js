@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         CSDN 允许复制
+// @name         CSDN 允许复制、去广告
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.1
-// @description  将“登录以复制”按钮更改为复制功能
+// @version      0.2
+// @description  将“登录以复制”按钮更改为复制功能，去除 banner 广告
 // @author       EricKwok
 // @match        https://*.csdn.net/*
 // @icon         https://g.csdnimg.cn/static/logo/favicon32.ico
@@ -67,7 +67,6 @@
                     addListener(child, 'click', function (child) {
                         copyMe(child);
                     });
-                    hackItem(item);
                 }
                 for (var child2 of child.children) {
                     if (child2.className.includes("signin")) {
@@ -76,9 +75,6 @@
                         addListener(child2, 'click', function (child) {
                             copyMe(child);
                         });
-                        hackItem(child);
-                        hackItem(item);
-                        hackItem(child2);
                     }
                 }
             }
@@ -88,7 +84,9 @@
     if (window.location.href.includes("blog.csdn.net")) {
         window.onload = function () {
             makeCopy();
-
+            for (var elem of document.querySelectorAll(".toolbar-advert")) {
+                elem.remove();
+            }
         };
     }
 })();

@@ -7,6 +7,7 @@
 // @match        https://*.csdn.net/*
 // @icon         https://g.csdnimg.cn/static/logo/favicon32.ico
 // @grant        none
+// @run-at       document-end
 // ==/UserScript==
 
 (function () {

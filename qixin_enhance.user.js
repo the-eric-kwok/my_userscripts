@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.4
+// @version      0.5
 // @description  老婆专用的启信宝增强插件
 // @author       最爱你的老公
 // @match        https://*.qixin.com/*
@@ -205,7 +205,7 @@ function loveUxxx() {
             } else console.log("HTML class \".company-name\" not found")
 
             // 从「企业概况」栏中读取
-            if (document.getElementById("overview")) {
+            if (document.getElementById("overview") && !document.getElementById("overview").innerText.includes("暂无信息")) {
                 var table = document.getElementById("overview").getElementsByTagName("tbody");
                 if (table.length > 0) {
                     var rows = table[0].rows;
@@ -223,10 +223,10 @@ function loveUxxx() {
                         }
                     }
                 } else errorAlert("Table inside #overview element not found.");
-            } else console.log("HTML element id \"overview\" not found");
+            } else console.log("HTML element id \"overview\" not found or doesn't contain information.");
 
             // 从「高管信息」栏中读取
-            if (document.getElementById("employee")) {
+            if (document.getElementById("employee") && !document.getElementById("employee").innerText.includes("暂无信息")) {
                 table = document.getElementById("employee").getElementsByTagName("tbody");
                 if (table.length > 0) {
                     rows = table[0].rows;
@@ -246,10 +246,10 @@ function loveUxxx() {
                     }
                     senior = senior.substring(0, senior.length - 1);
                 } else errorAlert("Table inside #employee element not found.");
-            } else console.log("HTML element id \"employee\" not found");
+            } else console.log("HTML element id \"employee\" not found or doesn't contain information.");
 
             // 从「工商信息」栏中读取
-            if (document.getElementById("icinfo")) {
+            if (document.getElementById("icinfo") && !document.getElementById("icinfo").innerText.includes("暂无信息")) {
                 var table = document.getElementById("icinfo").getElementsByTagName("tbody");
                 if (table.length > 0) {
                     var rows = table[0].rows;
@@ -264,10 +264,10 @@ function loveUxxx() {
                         }
                     }
                 } else errorAlert("Table inside #icinfo element not found.");
-            } else console.log("HTML element id \"icinfo\" not found");
+            } else console.log("HTML element id \"icinfo\" not found or doesn't contain information.");
 
             // 从「主要人员」栏中读取
-            if (document.getElementById("employees")) {
+            if (document.getElementById("employees") && !document.getElementById("employees").innerText.includes("暂无信息")) {
                 table = document.getElementById("employees").getElementsByTagName("tbody");
                 if (table.length > 0) {
                     var rows = table[0].rows;
@@ -286,10 +286,10 @@ function loveUxxx() {
                     }
                     senior = senior.substring(0, senior.length - 1);
                 } else errorAlert("Table inside #employees element not found.");
-            } else console.log("HTML element id \"employees\" not found");
+            } else console.log("HTML element id \"employees\" not found or doesn't contain information.");
 
             // 从「企业概况」栏中读取（香港公司）
-            if (document.getElementById("appHkOverview")) {
+            if (document.getElementById("appHkOverview") && !document.getElementById("appHkOverview").innerText.includes("暂无信息")) {
                 var table = document.getElementById("appHkOverview").getElementsByTagName("tbody");
                 if (table.length > 0) {
                     var rows = table[0].rows;
@@ -307,10 +307,10 @@ function loveUxxx() {
                         }
                     }
                 } else errorAlert("Table inside #appHkOverview element not found.");
-            } else console.log("HTML element id \"icinfo\" not found");
+            } else console.log("HTML element id \"icinfo\" not found or doesn't contain information.");
 
             // 从「高管信息」栏中读取（香港公司）
-            if (document.getElementById("hkExecutive")) {
+            if (document.getElementById("hkExecutive") && !document.getElementById("hkExecutive").innerText.includes("暂无信息")) {
                 table = document.getElementById("hkExecutive").getElementsByTagName("tbody");
                 if (table.length > 0) {
                     rows = table[0].rows;
@@ -330,7 +330,7 @@ function loveUxxx() {
                     }
                     senior = senior.substring(0, senior.length - 1);
                 } else errorAlert("Table inside #hkExecutive element not found.");
-            } else console.log("HTML element id \"employees\" not found");
+            } else console.log("HTML element id \"employees\" not found or doesn't contain information.");
             addBtns(companyName, telephone, address, senior);
         }
     }, 1000);

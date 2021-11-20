@@ -7,6 +7,7 @@
 // @match        *://github.com/*
 // @icon         https://i.loli.net/2021/03/30/ULV9XunaHesqGIR.png
 // @grant        none
+// @license      GPLv3
 // ==/UserScript==
 
 // 注入下载文件夹按钮

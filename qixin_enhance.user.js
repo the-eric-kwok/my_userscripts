@@ -8,6 +8,7 @@
 // @icon         https://www.qixin.com/favicon.ico
 // @run-at       document-end
 // @grant        none
+// @license      GPLv3
 // ==/UserScript==
 
 /**

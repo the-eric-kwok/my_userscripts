@@ -11,7 +11,7 @@
 // @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
 // @run-at       document-end
 // @icon         https://assets.zhihuishu.com/icon/favicon.ico?v=20210605
-// @license      GPL
+// @license      GPLv3
 // ==/UserScript==
 
 // 脚本配置区域开始

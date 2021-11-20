@@ -15,7 +15,7 @@
 // @grant        GM_deleteValue
 // @run-at       document-end
 // @icon         https://assets.zhihuishu.com/icon/favicon.ico?v=20210605
-// @license      GPL
+// @license      GPLv3
 // ==/UserScript==
 
 var gxkEnable = true;

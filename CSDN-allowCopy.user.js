@@ -8,6 +8,7 @@
 // @icon         https://g.csdnimg.cn/static/logo/favicon32.ico
 // @grant        none
 // @run-at       document-end
+// @license      GPLv3
 // ==/UserScript==
 
 (function () {

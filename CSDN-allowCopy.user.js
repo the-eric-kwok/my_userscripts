@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CSDN 允许复制、去广告
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.4
+// @version      0.5
 // @description  将“登录以复制”按钮更改为复制功能，去除 banner 广告
 // @author       EricKwok
 // @match        https://*.csdn.net/*
@@ -93,14 +93,28 @@
         }
     }
 
+    var adCssSelectors = [
+        ".toolbar-advert",
+        ".csdn-common-logo-advert",
+        ".passport-login-container",
+        ".top-bar",
+        ".csdn-common-logo-advert"
+    ];
+
     if (window.location.href.includes("blog.csdn.net")) {
         window.onload = function () {
             makeCopy();
             window.setInterval(function () {
-                for (var sel of [".toolbar-advert", ".csdn-common-logo-advert", ".passport-login-container"]) {
+                for (var sel of adCssSelectors) {
                     removeAd(sel);
                 }
             }, 100);
         };
+    } else if (window.location.href.includes("download.csdn.net")) {
+        window.setInterval(function () {
+            for (var sel of adCssSelectors) {
+                removeAd(sel);
+            }
+        }, 100);
     }
 })();

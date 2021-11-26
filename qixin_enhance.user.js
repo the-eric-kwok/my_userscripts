@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.5
+// @version      0.6
 // @description  老婆专用的启信宝增强插件
 // @author       最爱你的老公
 // @match        https://*.qixin.com/*
@@ -275,7 +275,8 @@ function loveUxxx() {
                     for (var row of rows) {
                         for (var i = 0; i < row.cells.length; i++) {
                             if (row.cells[i].innerHTML.includes("ent-name")) {
-                                var name = row.cells[i].querySelector(".ent-name").querySelector("a");
+                                var name = row.cells[i].querySelector(".ent-name>.ui-link-shareholder").querySelector("a");
+                                if (!name) name = row.cells[i].querySelector(".ent-name>.ui-link-shareholder");  // 如果高管姓名非超链接，则直接读取 ui-link-shareholder
                                 var _job = row.cells[i + 1].innerText.trim().replace(/\s/g, "").replace(delimiter, ",").replace(job, "").replace(quote, "").replace(commaAtBeginingOrEnd, "");
                                 if (_job.length > 0) {
                                     senior += name.innerText.trim() + ":";

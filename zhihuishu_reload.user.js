@@ -927,6 +927,3 @@ function configHotkeyBinding() {
     document.addEventListener('pjax:success', main);
     window.onload = main;
 })();
-
-
-// Fixme：点击已出答案的题目时，再次搜索得到的答案会附加在其后，而不是覆盖

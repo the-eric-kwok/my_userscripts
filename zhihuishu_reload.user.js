@@ -924,6 +924,22 @@ function configHotkeyBinding() {
         log("启动成功");
     }
 
-    document.addEventListener('pjax:success', main);
+    window.addEventListener('pjax:success', function () {
+        // 将 main 函数绑定到 pjax 监听器上
+        console.log("pjax success");
+        main();
+    });
+    window.addEventListener('pushState', function (e) {
+        console.log('change pushState');
+        main();
+    });
+    window.addEventListener('replaceState', function (e) {
+        console.log('change replaceState');
+        main();
+    });
+    window.addEventListener('hashchange', function (event) {
+        console.log(event, 'hashchange');
+        main();
+    })
     window.onload = main;
 })();

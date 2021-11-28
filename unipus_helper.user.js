@@ -8,10 +8,15 @@
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
 // @match        *://u.unipus.cn/*
 // @connect      unipus.cn
-// @connect      caiyunai.com
+// @connect      fanyi.youdao.com
+// @connect      translate.google.cn
+// @connect      translate.google.com
+// @connect      api.microsofttranslator.com
+// @connect      api.fanyi.baidu.com
 // @grant        GM_xmlhttpRequest
+// @grant        GM_setClipboard
 // @run-at       document-end
-// @require      https://lib.baomitu.com/jquery/3.6.0/jquery.min.js
+// @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
 // @License      GPLv3
 // ==/UserScript==
 
@@ -25,6 +30,20 @@ function randomString(length) {
     let ret = "";
     for (let i = 0; i < length; i++) {
         ret += abc.charAt(Math.floor(Math.random() * abc.length));
+    }
+    return ret
+}
+
+/**
+ * Generate a random num string
+ * @param {number} length Length of this random num string
+ * @returns {string} The random num string
+ */
+function randomNumString(length) {
+    let nums = "0123456789";
+    let ret = "";
+    for (let i = 0; i < length; i++) {
+        ret += nums.charAt(Math.floor(Math.random() * nums.length));
     }
     return ret
 }
@@ -45,6 +64,26 @@ function sleep(ms = 10) {
             resolve();
         }, ms);
     })
+}
+
+async function getRequest(url, headers = {}, timeout = 5000) {
+    return new Promise(function (resolve, reject) {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: url,
+            headers: headers,
+            timeout: timeout,
+            onload: (xhr) => {
+                resolve(xhr);
+            },
+            onerror: (err) => {
+                reject(err);
+            },
+            ontimeout: (err) => {
+                reject(err);
+            }
+        });
+    });
 }
 
 /**
@@ -68,12 +107,11 @@ function copyMe(str) {
 
     }
 
-    if (navigator.clipboard && window.isSecureContext) {
+    if (GM_setClipboard) {
+        GM_setClipboard(str);
+    } else if (navigator.clipboard && window.isSecureContext) {
         console.log("正在使用 navigator clipboard api 进行复制操作");
         navigator.clipboard.writeText(str)
-            .then(() => {
-                console.log('复制成功');
-            })
             .catch(err => {
                 console.log("navigator clipboard api 复制时出错，将使用传统方法进行复制")
                 _legacyCopy();
@@ -93,6 +131,7 @@ function main() {
         }, 100);
     }
     if (window.location.href.includes("ucontent.unipus.cn")) {
+        $.getScript("https://cdn.staticaly.com/gh/placemarker/jQuery-MD5/master/jquery.md5.js");
         $('head').append('<link href="https://lib.baomitu.com/layui/2.6.8/css/layui.css" rel="stylesheet" type="text/css" />');
         $.getScript("https://lib.baomitu.com/layui/2.6.8/layui.js", function (data, status, jqxhr) {
             layui.use('element', function () {
@@ -110,7 +149,7 @@ function main() {
             }
         }, 100);
 
-        let show = () => {
+        function show() {
             layer.open({
                 type: 1,
                 area: ['310px', '400px'],
@@ -136,167 +175,214 @@ function main() {
             });
         }
 
-        let showanswer = () => {
+        async function showanswer() {
             let url = location.href
             let arr = url.split("/")
             let unit = arr[arr.length - 2]
             let course = /course-v1:.*?\//g.exec(url);
             course = course[0];
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: 'https://ucontent.unipus.cn/course/api/content/' + course + unit + '/default/',
-                headers: {
+            let questionNo = /p_./g.exec(url);
+            let xhr = await getRequest(
+                `https://ucontent.unipus.cn/course/api/content/${course}${unit}/default/`,
+                {
                     'X-ANNOTATOR-AUTH-TOKEN': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJvcGVuX2lkIjoidHV4NkNCQVc4aGRrcnFZdzc5SEpEWDF2aTR5Z2ptcDUiLCJuYW1lIjoiIiwiZW1haWwiOiIiLCJhZG1pbmlzdHJhdG9yIjoiZmFsc2UiLCJleHAiOjE5MDI5NzAxNTcwMDAsImlzcyI6IlI0aG03RmxQOFdvS0xaMUNmTkllIiwiYXVkIjoiZWR4LnVuaXB1cy5jbiJ9.CwuQmnSmIuts3hHAMf9lT954rKHXUNkps-PfRJp0KnU'
                 },
-                timeout: 5000,
-                onload: function (xhr) {
-                    if (xhr.status == 200) {
-                        let obj = JSON.parse(xhr.responseText) || {};
-                        if (obj.content) {
-                            let content = JSON.parse(obj.content) || {};
-                            // 选择题
-                            if (content["questions:questions"]) {
-                                let questionList = content['questions:questions']['questions'];
-                                let num = 0;
-                                for (let question of questionList) {
-                                    num++;
-                                    let answerId = randomString(5);
-                                    let btnId = randomString(5);
-                                    let el = `<tr class="layui-bg"><td><b>${num}. </b><code id="${answerId}">${question.answers.join("、")}</code></td></tr>`;
-                                    $("#content>table>tbody").append($(el));
-                                    $(`#${btnId}`).on("click", function () {
-                                        let _answer = $(`#${answerId}`).text();
-                                        copyMe(_answer);
-                                    })
+                5000
+            ).catch((err) => {
+                console.error(err);
+                let el = `<tr class="layui-bg"><td>答案加载失败，请刷新重试。</td></tr>`;
+                $("#content>table>tbody").append($(el));
+            });
+            if (xhr.status != 200) {
+                let el = `<tr class="layui-bg"><td>答案加载失败，请刷新重试。</td></tr>`;
+                $("#content>table>tbody").append($(el));
+                return;
+            }
+            let obj = JSON.parse(xhr.responseText) || {};
+            if (!obj.content) {
+                throw Error("U校园返回的内容中不包含'content'字段，请检查api是否改变！");
+            }
+            let content = JSON.parse(obj.content) || {};
+
+            for (let key in content) {
+                if (key.includes(":questions")) {
+                    // 选择题
+                    let questionList = content[key].questions;
+                    for (let num = 0; num < questionList.length; num++) {
+                        let question = questionList[num];
+                        let answerId = randomString(5);
+                        let btnId = randomString(5);
+                        let el = `<tr class="layui-bg"><td><b>${num + 1}. </b><code id="${answerId}">${question.answers.join("、")}</code></td></tr>`;
+                        $("#content>table>tbody").append($(el));
+                        $(`#${btnId}`).on("click", function () {
+                            let _answer = $(`#${answerId}`).text();
+                            copyMe(_answer);
+                        })
+                    }
+                    let interval = window.setInterval(async function () {
+                        if (document.querySelector(".questions--questionDefault-2XLzl.undefined")) {
+                            window.clearInterval(interval);
+                            for (let num = 0; num < questionList.length; num++) {
+                                let question = questionList[num];
+                                let questionElem = document.querySelectorAll(".questions--questionDefault-2XLzl.undefined")[num]
+                                let options = questionElem.querySelectorAll(".clearfix");
+                                if (options.length == 0) {
+                                    options = questionElem.querySelectorAll(".MultipleChoice--checkbox-2_VGC");
                                 }
-                                let interval = window.setInterval(async function () {
-                                    if (document.querySelector(".questions--questionDefault-2XLzl.undefined")) {
-                                        window.clearInterval(interval);
-                                        let num = 0;
-                                        for (let question of questionList) {
-                                            let questionElem = document.querySelectorAll(".questions--questionDefault-2XLzl.undefined")[num]
-                                            let options = questionElem.querySelectorAll(".clearfix");
-                                            for (let answer of question.answers) {
-                                                let sel = answer.toUpperCase().charCodeAt(0) - "A".charCodeAt(0);
-                                                options[sel].click();
-                                            }
-                                            num++;
-                                            await sleep(1000);
-                                        }
-                                    }
-                                }, 1000);
-                            }
-
-                            // 填空题
-                            if (content['questions:scoopquestions']) {
-                                let questionList = content['questions:scoopquestions']['questions'];
-                                let num = 0;
-                                for (let question of questionList) {
-                                    num++;
-                                    let answerId = randomString(5);
-                                    let btnId = randomString(5);
-                                    let el = `<tr class="layui-bg"><td><b>${num}. </b><code id="${answerId}">${question.answers[0]}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`;
-                                    $("#content>table>tbody").append($(el));
-                                    $(`#${btnId}`).on("click", function () {
-                                        let _answer = $(`#${answerId}`).text();
-                                        copyMe(_answer);
-                                    });
+                                for (let answer of question.answers) {
+                                    let sel = answer.toUpperCase().charCodeAt(0) - "A".charCodeAt(0);
+                                    options[sel].click();
                                 }
-
-                            }
-
-                            // 翻译题
-                            if (content['shortanswer:shortanswer']) {
-                                let question = content['shortanswer:shortanswer'].content[0].html.html;
-                                question = question.replace(/<.*?>|\(.*?\)|（.*?）/g, "");
-                                let direction = 'zh2en';
-                                if (/^[a-zA-Z\.,\s]+$/g.test(question.substring(0, 5))) direction = 'en2zh';
-                                GM_xmlhttpRequest({
-                                    method: "POST",
-                                    url: "http://api.interpreter.caiyunai.com/v1/translator",
-                                    data: `{
-                                        "source":"${question}",
-                                        "trans_type":"${direction}",
-                                        "request_id":"${randomString(5)}",
-                                        "detect":true
-                                    }`,
-                                    headers: {
-                                        "content-type": "application/json",
-                                        "x-authorization": "token 3975l6lr5pcbvidl6jl2"
-                                    },
-                                    onload: function (response) {
-                                        if (response.status == 200) {
-                                            let respJson = JSON.parse(response.responseText);
-                                            console.log(respJson.target);
-                                            let btnId = randomString(5);
-                                            let el = `<tr class="layui-bg"><td><b>彩云小译：</b>${respJson.target}<button style="float:right;" id="${btnId}">复制</button></td></tr>`;
-                                            $("#content>table>tbody").prepend($(el));
-                                            $(`#${btnId}`).on("click", function () {
-                                                copyMe(respJson.target);
-                                            })
-                                        } else {
-                                            let el = `<tr class="layui-bg"><td>彩云小译：获取失败，请刷新重试</td></tr>`;
-                                            $("#content>table>tbody").prepend($(el));
-                                        }
-                                    },
-                                    onerror: function () {
-                                        let el = `<tr class="layui-bg"><td>彩云小译：获取失败，请刷新重试</td></tr>`;
-                                        $("#content>table>tbody").prepend($(el));
-                                    },
-                                    onabort: function () {
-                                        let el = `<tr class="layui-bg"><td>彩云小译：获取失败，请刷新重试</td></tr>`;
-                                        $("#content>table>tbody").prepend($(el));
-                                    },
-                                    ontimeout: function () {
-                                        let el = `<tr class="layui-bg"><td>彩云小译：获取失败，请刷新重试</td></tr>`;
-                                        $("#content>table>tbody").prepend($(el));
-                                    },
-                                    timeout: 5000
-                                });
-                                let answer = content['shortanswer:shortanswer'].analysis.html;
-                                answer = answer.replace(/<.*?>/g, "");
-                                let el = `
-                                <tr class="layui-bg"><td><b>标准答案（仅供参考）：</b>${answer}</td></tr>`;
-                                $("#content>table>tbody").append($(el));
-                            }
-
-                            // 简答题
-                            if (content["questions:shortanswer"]) {
-                                let questionList = content["questions:shortanswer"]["questions"];
-                                let num = 0;
-                                for (let question of questionList) {
-                                    num++;
-                                    let answer = question.analysis.html.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, "");
-                                    let answerId = randomString(5);
-                                    let btnId = randomString(5);
-                                    let el = `<tr class="layui-bg"><td><b>${num}.（仅供参考）</b><code id="${answerId}">${answer}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`;
-                                    $("#content>table>tbody").append($(el));
-                                    $(`#${btnId}`).on("click", function () {
-                                        let _answer = $(`#${answerId}`).text();
-                                        copyMe(_answer);
-                                    });
-
-                                }
+                                await sleep(200);
                             }
                         }
-                    } else {
-                        let el = `<tr class="layui-bg"><td>答案加载失败，请刷新重试。</td></tr>`;
+                    }, 1000);
+                } else if (key.includes(":scoopquestions")) {
+                    // 填空题
+                    let questionList = content[key].questions;
+                    for (let num = 0; num < questionList.length; num++) {
+                        let question = questionList[num];
+                        let answerId = randomString(5);
+                        let btnId = randomString(5);
+                        let el = `<tr class="layui-bg"><td><b>${num + 1}. </b><code id="${answerId}">${question.answers[0]}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`;
                         $("#content>table>tbody").append($(el));
+                        $(`#${btnId}`).on("click", function () {
+                            let _answer = $(`#${answerId}`).text();
+                            copyMe(_answer);
+                        });
                     }
-                },
-                onerror: function () {
-                    let el = `<tr class="layui-bg"><td>答案加载失败，请刷新重试。</td></tr>`;
+                    let interval = window.setInterval(function () {
+                        if (document.querySelector(".htmlViewBlank--holder_style-2dnxi")) {
+                            window.clearInterval(interval);
+                            $("#content>table>tbody").prepend($(
+                                `<tr class="layui-bg"><td><b>无需在此面板中复制，点击题目中的空，直接粘贴即可。</b></td></tr>`
+                            ))
+                            for (let num = 0; num < questionList.length; num++) {
+                                let answer = questionList[num].answers[0];
+                                $(document.querySelectorAll(".htmlViewBlank--holder_style-2dnxi")[num]).on("click", function () {
+                                    copyMe(answer);
+                                });
+                            }
+                        }
+                    }, 500);
+                } else if (key.includes(':shortanswer') && content[key].category === "shortanswer:shortAnswer") {
+                    // 翻译题
+                    let question = content[key].content[0].html.html;
+                    question = question.replace(/<.*?>|\(.*?\)|（.*?）/g, "");
+                    let direction = 'zh2en';
+                    if (/^[a-zA-Z\.,\s]+$/g.test(question.substring(0, 5))) direction = 'en2zh';
+                    try {
+                        // 谷歌翻译
+                        let googleTranslateXhr = await getRequest(
+                            `http://translate.google.cn/translate_a/single?client=gtx&dt=t&dj=1&ie=UTF-8&sl=${direction.split("2")[0]}&tl=${direction.split("2")[1]}&q=${encodeURIComponent(question)}`
+                        );
+                        let googleTranslatedObj = JSON.parse(googleTranslateXhr.responseText);
+                        let googleTranslateResult = "";
+                        for (let sentence of googleTranslatedObj.sentences) {
+                            googleTranslateResult += sentence.trans;
+                        }
+                        let answerId = randomString(5);
+                        let btnId = randomString(5);
+                        $("#content>table>tbody").append($(`<tr class="layui-bg"><td><b>谷歌翻译：</b><code id="${answerId}">${googleTranslateResult}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`));
+                        $(`#${btnId}`).on("click", function () {
+                            let _answer = $(`#${answerId}`).text();
+                            copyMe(_answer);
+                        });
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    try {
+                        // 百度翻译
+                        let appid = "20211128001012194";
+                        let salt = randomString(10);
+                        let sec = "LmBTDmGsvh2Ww2ws2F2S";
+                        let sign = md5(appid + question + salt + sec);
+                        let baiduTranslateXhr = await getRequest(
+                            `http://api.fanyi.baidu.com/api/trans/vip/translate?q=${encodeURIComponent(question)}&from=${direction.split("2")[0]}&to=${direction.split("2")[1]}&appid=${appid}&salt=${salt}&sign=${sign}`
+                        );
+                        let baiduTranslateObj = JSON.parse(baiduTranslateXhr.responseText);
+                        let baiduTranslateResult = "";
+                        for (let item of baiduTranslateObj.trans_result) {
+                            baiduTranslateResult += item.dst;
+                        }
+                        let answerId = randomString(5);
+                        let btnId = randomString(5);
+                        $("#content>table>tbody").append($(`<tr class="layui-bg"><td><b>百度翻译：</b><code id="${answerId}">${baiduTranslateResult}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`));
+                        $(`#${btnId}`).on("click", function () {
+                            let _answer = $(`#${answerId}`).text();
+                            copyMe(_answer);
+                        });
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    try {
+                        // 必应翻译
+                        let bingTranslateXhr = await getRequest(
+                            `http://api.microsofttranslator.com/v2/Http.svc/Translate?appId=AFC76A66CF4F434ED080D245C30CF1E71C22959C&from=${direction.split("2")[0]}&to=${direction.split("2")[1]}&text=${encodeURIComponent(question)}`
+                        );
+                        let bingTranslateResult = bingTranslateXhr.responseText.replace(/<.*?>/g, "");
+                        if (!bingTranslateResult.includes("TranslateApiExceptionMethod")) {
+                            let answerId = randomString(5);
+                            let btnId = randomString(5);
+                            $("#content>table>tbody").append($(`<tr class="layui-bg"><td><b>必应翻译：</b><code id="${answerId}">${bingTranslateResult}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`));
+                            $(`#${btnId}`).on("click", function () {
+                                let _answer = $(`#${answerId}`).text();
+                                copyMe(_answer);
+                            });
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    let answer = content[key].analysis.html;
+                    answer = answer.replace(/<.*?>/g, "");
+                    let el = `<tr class="layui-bg"><td><b>标准答案（仅供参考）：</b>${answer}</td></tr>`;
                     $("#content>table>tbody").append($(el));
-                },
-                onabort: function () {
-                    let el = `<tr class="layui-bg"><td>答案加载失败，请刷新重试。</td></tr>`;
-                    $("#content>table>tbody").append($(el));
-                },
-                ontimeout: function () {
-                    let el = `<tr class="layui-bg"><td>答案加载失败，请刷新重试。</td></tr>`;
-                    $("#content>table>tbody").append($(el));
-                },
-            });
+                } else if (key.includes(':shortanswer') && content[key].category === "shortanswerScoop") {
+                    // 简答题
+                    if (content[key].analysis.html.length > 0) {
+                        let answer = content[key].analysis.html;
+                        answer = answer.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, "");
+                        let answerId = randomString(5);
+                        let btnId = randomString(5);
+                        let el = `<tr class="layui-bg"><td><b>标准答案（仅供参考）：</b><code id="${answerId}">${answer}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`;
+                        $("#content>table>tbody").append($(el));
+                        $(`#${btnId}`).on("click", function () {
+                            let _answer = $(`#${answerId}`).text();
+                            copyMe(_answer);
+                        });
+                    } else {
+                        let questionList = content[key].questions;
+                        for (let i = 0; i < questionList.length; i++) {
+                            let question = questionList[i];
+                            let answerId = randomString(5);
+                            let btnId = randomString(5);
+                            let answer = question.analysis.html.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, "");
+                            let el = `<tr class="layui-bg"><td><b>${i + 1}.（仅供参考）</b><code id="${answerId}">${answer}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`;
+                            $("#content>table>tbody").append($(el));
+                            $(`#${btnId}`).on("click", function () {
+                                let _answer = $(`#${answerId}`).text();
+                                copyMe(_answer);
+                            });
+                        }
+                    }
+                } else if (key.includes(":shortanswer") || key.includes(":scoopshortanswer")) {
+                    // 简答题
+                    let questionList = content[key].questions;
+                    for (let i = 0; i < questionList.length; i++) {
+                        let question = questionList[i];
+                        let answerId = randomString(5);
+                        let btnId = randomString(5);
+                        let answer = question.analysis.html.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, "");
+                        let el = `<tr class="layui-bg"><td><b>${i + 1}.（仅供参考）</b><code id="${answerId}">${answer}</code><button style="float:right;" id="${btnId}">复制</button></td></tr>`;
+                        $("#content>table>tbody").append($(el));
+                        $(`#${btnId}`).on("click", function () {
+                            let _answer = $(`#${answerId}`).text();
+                            copyMe(_answer);
+                        });
+                    }
+                }
+
+            }
         }
 
         window.onhashchange = () => {

@@ -17,6 +17,7 @@
 // @grant        GM_setValue
 // @grant        GM_deleteValue
 // @grant        GM_xmlhttpRequest
+// @grant        GM_setClipboard
 // @run-at       document-end
 // @icon         https://assets.zhihuishu.com/icon/favicon.ico?v=20210605
 // @license      GPLv3
@@ -507,12 +508,11 @@ function copyMe(str) {
 
     }
 
-    if (navigator.clipboard && window.isSecureContext) {
+    if (GM_setClipboard) {
+        GM_setClipboard(str);
+    } else if (navigator.clipboard && window.isSecureContext) {
         console.log("正在使用 navigator clipboard api 进行复制操作");
         navigator.clipboard.writeText(str)
-            .then(() => {
-                console.log('复制成功');
-            })
             .catch(err => {
                 console.log("navigator clipboard api 复制时出错，将使用传统方法进行复制")
                 _legacyCopy();

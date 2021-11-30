@@ -1,16 +1,16 @@
 // ==UserScript==
 // @name         [Reload]智慧树考试搜题、共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      1.3.0
+// @version      1.3.1
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、自动搜题、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/my_userscripts
 // @supportURL   https://github.com/the-eric-kwok/my_userscripts/issues
 // @match        *://studyh5.zhihuishu.com/videoStudy*
 // @match        *://onlineexamh5new.zhihuishu.com/stuExamWeb.html*
-// @connect      *://cx.icodef.com/*
-// @connect      *://api.zhizhuoshuma.cn/*
-// @connect      *://api.muketool.com/*
+// @connect      cx.icodef.com
+// @connect      api.zhizhuoshuma.cn
+// @connect      api.muketool.com
 // @require      https://greasyfork.org/scripts/28536-gm-config/code/GM_config.js
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
 // @grant        GM_getValue

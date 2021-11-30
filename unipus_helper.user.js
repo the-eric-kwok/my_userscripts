@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园英语网课答案显示
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      1.2
+// @version      1.3
 // @description  小窗口显示U校园板块测试答案
 // @author       gongchen, EricKwok
 // @icon         https://ucontent.unipus.cn/favicon.ico
@@ -124,9 +124,10 @@ function copyMe(str) {
 function main() {
     if (window.location.href.includes("u.unipus.cn")) {
         window.setInterval(function () {
-            if (document.getElementsByClassName("layui-layer-shade").length > 0) {
+            if (document.getElementsByClassName("layui-layer-shade").length > 0 && document.querySelectorAll(".layui-layer-dialog").length > 0) {
                 // 去除环境检测弹窗
                 document.querySelector(".layui-layer-shade").remove();
+                document.querySelector(".layui-layer-dialog").remove();
             }
         }, 100);
     }

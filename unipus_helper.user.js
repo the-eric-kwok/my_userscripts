@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         U校园英语网课答案显示
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      1.2
+// @version      1.4
 // @description  小窗口显示U校园板块测试答案
-// @author       gongchen, EricKwok
+// @author       gongchen, EricKwok, SSmJaE
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
 // @match        *://u.unipus.cn/*
@@ -17,6 +17,7 @@
 // @grant        GM_setClipboard
 // @run-at       document-end
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
 // @License      GPLv3
 // ==/UserScript==
 
@@ -49,14 +50,12 @@ function randomNumString(length) {
 }
 
 /**
- * 异步等待，只阻塞当前脚本调用处函数，不阻塞整个浏览器，默认等待 10 ms
+ * Async wait, default to 10 ms
  *
- * 调用方法：await sleep() 或 await sleep (1000)
- *
- * @param {number} ms 等待的毫秒数
- * @returns 一个匿名函数的 Promise
+ * @param {number} ms How long to wait (in millisecond)
+ * @returns {Promise<null>}
  */
-function sleep(ms = 10) {
+async function sleep(ms = 10) {
     // 异步等待，只阻塞当前脚本调用处函数，不阻塞整个浏览器
     // 调用方法：await sleep() 或 await sleep (1000)
     return new Promise(function (resolve, reject) {
@@ -84,6 +83,27 @@ async function getRequest(url, headers = {}, timeout = 5000) {
             }
         });
     });
+}
+
+/**
+ * Decrypt and parse "content" of XHR, thanks to SSmJaE for providing this function!
+ * @param {String}} json Encrypted json or raw json string
+ * @returns {Object} Object from raw json string
+ */
+function parseJson(json) {
+    if (json) {
+        let r = json.content.slice(7)
+            , o = CryptoJS.enc.Utf8.parse("1a2b3c4d" + json.k)
+            , i = CryptoJS.enc.Hex.parse(r)
+            , a = CryptoJS.enc.Base64.stringify(i)
+            , contentJson = JSON.parse(CryptoJS.AES.decrypt(a, o, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.ZeroPadding
+            }).toString(CryptoJS.enc.Utf8));
+        json = contentJson;
+        console.log(json);
+    }
+    return json;
 }
 
 /**
@@ -213,7 +233,7 @@ function main() {
             if (!obj.content) {
                 throw Error("U校园返回的内容中不包含'content'字段，请检查api是否改变！");
             }
-            let rawContent = JSON.parse(obj.content) || {};
+            let rawContent = parseJson(obj) || {};
 
             let pages = {};
             for (let key in rawContent) {

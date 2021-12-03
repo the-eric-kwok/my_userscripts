@@ -144,9 +144,10 @@ function copyMe(str) {
 function main() {
     if (window.location.href.includes("u.unipus.cn")) {
         window.setInterval(function () {
-            if (document.getElementsByClassName("layui-layer-shade").length > 0) {
+            if (document.getElementsByClassName("layui-layer-shade").length > 0 && document.querySelectorAll(".layui-layer-dialog").length > 0) {
                 // 去除环境检测弹窗
                 document.querySelector(".layui-layer-shade").remove();
+                document.querySelector(".layui-layer-dialog").remove();
             }
         }, 100);
     }

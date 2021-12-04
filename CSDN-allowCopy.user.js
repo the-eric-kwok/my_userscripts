@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CSDN 允许复制、去广告
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.5
+// @version      0.6
 // @description  将“登录以复制”按钮更改为复制功能，去除 banner 广告
 // @author       EricKwok
 // @match        https://*.csdn.net/*
@@ -24,6 +24,17 @@
             element['on' + eventName] = handler;
         }
     }
+
+    function allowSelect(elem) {
+        // 删除 CSS 中禁止复制的属性
+        elem.style.setProperty("-webkit-touch-callout", "initial");
+        elem.style.setProperty("-webkit-user-select", "initial");
+        elem.style.setProperty("-khtml-user-select", "initial");
+        elem.style.setProperty("-moz-user-select", "initial");
+        elem.style.setProperty("-ms-user-select", "initial");
+        elem.style.setProperty("user-select", "initial");
+    }
+
     function copyMe(elem) {
         console.log(elem);
         elem.path[0].setAttribute("data-title", "复制成功✅")
@@ -62,7 +73,9 @@
 
     function makeCopy() {
         for (var item of document.querySelectorAll("pre")) {
+            allowSelect(item);
             for (var child of item.children) {
+                allowSelect(child);
                 if (child.className.includes("signin")) {
                     child.setAttribute("data-title", "复制");
                     child.setAttribute("onclick", "");
@@ -71,6 +84,7 @@
                     });
                 }
                 for (var child2 of child.children) {
+                    allowSelect(child2);
                     if (child2.className.includes("signin")) {
                         child2.setAttribute("data-title", "复制");
                         child.setAttribute("onclick", "");
@@ -104,6 +118,10 @@
     if (window.location.href.includes("blog.csdn.net")) {
         window.onload = function () {
             makeCopy();
+            // 去除复制时末尾追加的版权信息（实际上通过阻止copy事件传播来实现）
+            window.addEventListener("copy", function (event) {
+                event.stopImmediatePropagation();
+            }, true);
             window.setInterval(function () {
                 for (var sel of adCssSelectors) {
                     removeAd(sel);

@@ -1,9 +1,8 @@
 // ==UserScript==
-// @name         U校园英语网课答案显示
-// @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      1.4
+// @name         U校园unipus英语网课作业答案显示(不支持单元测试)
+// @namespace    https://greasyfork.org
+// @version      1.8
 // @description  小窗口显示U校园板块测试答案
-// @author       gongchen, EricKwok, SSmJaE
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
 // @match        *://u.unipus.cn/*
@@ -15,11 +14,14 @@
 // @connect      api.fanyi.baidu.com
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setClipboard
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @run-at       document-end
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
-// @License      GPLv3
+// @license      MIT
 // ==/UserScript==
+
 
 /**
  * Generate a random string
@@ -141,6 +143,44 @@ function copyMe(str) {
     }
 }
 
+/**
+ * Get token
+ * @returns {string} token or fallbackToken when error.
+ */
+async function getToken() {
+    let fallbackToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJvcGVuX2lkIjoidHV4NkNCQVc4aGRrcnFZdzc5SEpEWDF2aTR5Z2ptcDUiLCJuYW1lIjoiIiwiZW1haWwiOiIiLCJhZG1pbmlzdHJhdG9yIjoiZmFsc2UiLCJleHAiOjE5MDI5NzAxNTcwMDAsImlzcyI6IlI0aG03RmxQOFdvS0xaMUNmTkllIiwiYXVkIjoiZWR4LnVuaXB1cy5jbiJ9.CwuQmnSmIuts3hHAMf9lT954rKHXUNkps-PfRJp0KnU";
+    let oldToken = GM_getValue("token");
+    if (oldToken && new Date(oldToken.expireWhen).getTime() > new Date().getTime()) {
+        return oldToken.token;
+    }
+    let url = "https://u.unipus.cn/user/data/getToken";
+    let xhr = await getRequest(url).catch((err) => {
+        console.error(err);
+        layui.use("layer", function () {
+            layer.alert(`获取 Token 失败，请刷新重试\n错误信息：${err}`);
+        });
+        return fallbackToken;
+    });
+    if (xhr.status != 200) {
+        layui.use("layer", function () {
+            layer.alert(`获取 Token 失败，请刷新重试`);
+        });
+        return fallbackToken;
+    }
+    let obj = JSON.parse(xhr.responseText);
+    if (!obj || !obj.token)
+        return fallbackToken;
+    let token = obj.token;
+    let expireWhen = new Date()
+    expireWhen.setDate(expireWhen.getDate() + 1);
+    let tokenObj = {
+        token: token,
+        expireWhen: expireWhen,
+    }
+    GM_setValue("token", tokenObj);
+    return token;
+}
+
 function main() {
     if (window.location.href.includes("u.unipus.cn")) {
         window.setInterval(function () {
@@ -162,13 +202,6 @@ function main() {
             show();
             showanswer();
         });
-
-        window.setInterval(function () {
-            if (document.getElementsByClassName("dialog-header-pc--close-yD7oN").length > 0) {
-                // 关闭单元学习时间弹窗
-                document.querySelector(".dialog-header-pc--close-yD7oN").click();
-            }
-        }, 100);
 
         let autoClickPlay = window.setInterval(async function () {
             if (document.querySelector(".audio--aplayer-mute-2VMS7")) {
@@ -214,10 +247,11 @@ function main() {
             let unit = arr[arr.length - 2]
             let course = /course-v1:.*?\//g.exec(url);
             course = course[0];
+            let token = await getToken();
             let xhr = await getRequest(
                 `https://ucontent.unipus.cn/course/api/content/${course}${unit}/default/`,
                 {
-                    'X-ANNOTATOR-AUTH-TOKEN': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJvcGVuX2lkIjoidHV4NkNCQVc4aGRrcnFZdzc5SEpEWDF2aTR5Z2ptcDUiLCJuYW1lIjoiIiwiZW1haWwiOiIiLCJhZG1pbmlzdHJhdG9yIjoiZmFsc2UiLCJleHAiOjE5MDI5NzAxNTcwMDAsImlzcyI6IlI0aG03RmxQOFdvS0xaMUNmTkllIiwiYXVkIjoiZWR4LnVuaXB1cy5jbiJ9.CwuQmnSmIuts3hHAMf9lT954rKHXUNkps-PfRJp0KnU'
+                    'X-ANNOTATOR-AUTH-TOKEN': token
                 },
                 5000
             ).catch((err) => {

@@ -11,7 +11,7 @@
 // @license      GPLv3
 // ==/UserScript==
 
-let love = true;
+let love = false;
 
 /**
  * Auto remove on-page advertisement

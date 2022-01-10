@@ -1,10 +1,13 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.9
+// @version      0.10
 // @description  在启信宝公司页面插入复制公司名称、复制电话、复制地址、复制高管信息按钮
 // @author       EricKwok
-// @match        https://*.qixin.com/*
+// @match        *://*.qixin.com/*
+// @match        *://www.szjzy.org.cn/member*
+// @match        *://xib.smartapp.knowlegene.com/marketing/*
+// @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js
 // @icon         https://www.qixin.com/favicon.ico
 // @run-at       document-end
 // @grant        none
@@ -170,8 +173,7 @@ function loveUxxx() {
     }
 }
 
-(function () {
-    'use strict';
+function qixinEnhance() {
     window.onload = window.setTimeout(function () {
         removeAd(".app-corner-marker");
         removeAd(".web-diversion-container");
@@ -343,5 +345,105 @@ function loveUxxx() {
             addBtns(companyName, telephone, address, senior);
         }
     }, 1000);
+}
+
+function szjzyEnhance() {
+    window.onload = function () {
+        document.querySelectorAll(".name").forEach((elem) => {
+            let companyName = elem.firstChild.data;
+            let id = parseInt(Math.random() * 10000);
+            let btnHtml = `<a id="btn${id}" data-clipboard-text="${companyName}">复制公司名称</a>`
+            elem.parentElement.insertAdjacentHTML("afterend", btnHtml);
+            let clipboard = new ClipboardJS(`#btn${id}`);
+            clipboard.on('success', function () {
+                document.querySelector(`#btn${id}`).innerText = "复制成功✅";
+                window.setTimeout(function () {
+                    document.querySelector(`#btn${id}`).innerText = "复制公司名称";
+                }, 1000);
+            });
+            console.log(companyName);
+        });
+    }
+}
+
+function xibEnhance() {
+    if (location.href.includes("xib.smartapp.knowlegene.com/marketing/track")) {
+        window.setInterval(function () {
+            if (document.querySelector(".el-dialog--primary") && !document.querySelector("#copyCompanyName")) {
+                let companyName = document.querySelector(".el-dialog--primary").getAttribute("aria-label").split("-")[0];
+                let copyBtn = `<a id="copyCompanyName" data-clipboard-text="${companyName}"> 复制公司名称</a>`
+                document.querySelector(".el-dialog--primary").querySelector(".el-dialog__title").insertAdjacentHTML("afterend", copyBtn);
+                let clipboard = new ClipboardJS(`#copyCompanyName`);
+                clipboard.on('success', function () {
+                    document.querySelector(`#copyCompanyName`).innerText = "复制成功✅";
+                    window.setTimeout(function () {
+                        document.querySelector(`#copyCompanyName`).innerText = "复制公司名称";
+                    }, 1000);
+                });
+            }
+        }, 100);
+    } else if (location.href.includes("xib.smartapp.knowlegene.com/marketing/expand")) {
+        function addCopyBtn(elem, text) {
+            let id = parseInt(Math.random() * 1000);
+            let copyBtn = ` <a id="btn${id}" data-clipboard-text="${text}">复制</a>`
+            elem.insertAdjacentHTML("beforeend", copyBtn);
+            let clipboard = new ClipboardJS(`#btn${id}`);
+            clipboard.on('success', function () {
+                document.querySelector(`#btn${id}`).innerText = "成功✅";
+                window.setTimeout(function () {
+                    document.querySelector(`#btn${id}`).innerText = "复制";
+                }, 1000);
+            });
+        }
+        let interval = window.setInterval(function () {
+            let nameElem = document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(2) > div:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(2)");
+            if (nameElem && nameElem.innerText !== "-") {
+                let elems = []
+                // 企业基本信息 -> 企业名称
+                elems.push(document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(2) > div:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(2)"))
+                // 企业基本信息 -> 注册地址
+                elems.push(document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(2) > div:nth-child(2) > table > tbody > tr:nth-child(7) > td"));
+                // 企业陌拜营销线索 -> 企业名称
+                elems.push(document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(3) > div:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(2)"));
+                // 企业陌拜营销线索 ->  注册地址
+                elems.push(document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(3) > div:nth-child(2) > table > tbody > tr:nth-child(2) > td:nth-child(2)"));
+                // 企业陌拜营销线索 -> 企业联系电话
+                elems.push(document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(3) > div:nth-child(2) > table > tbody > tr:nth-child(3) > td:nth-child(2)"));
+                // 企业陌拜营销线索 -> 办公地址
+                elems.push(document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(3) > div:nth-child(2) > table > tbody > tr:nth-child(2) > td:nth-child(4)"));
+                // 企业陌拜营销线索 -> 董事长/总裁/总经理
+                elems.push(document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(3) > div:nth-child(2) > table > tbody > tr:nth-child(4) > td:nth-child(2)"));
+                for (let elem of elems) {
+                    addCopyBtn(elem, elem.innerText);
+                }
+                window.clearInterval(interval);
+            }
+        }, 1000);
+        window.setInterval(function () {
+            if (document.querySelector(".el-dialog--primary") && !document.querySelector("#copyCompanyName")) {
+                let companyName = document.querySelector(".el-dialog--primary").getAttribute("aria-label").split("-")[0];
+                let copyBtn = `<a id="copyCompanyName" data-clipboard-text="${companyName}"> 复制公司名称</a>`
+                document.querySelector(".el-dialog--primary").querySelector(".el-dialog__title").insertAdjacentHTML("afterend", copyBtn);
+                let clipboard = new ClipboardJS(`#copyCompanyName`);
+                clipboard.on('success', function () {
+                    document.querySelector(`#copyCompanyName`).innerText = "复制成功✅";
+                    window.setTimeout(function () {
+                        document.querySelector(`#copyCompanyName`).innerText = "复制公司名称";
+                    }, 1000);
+                });
+            }
+        }, 100);
+    }
+}
+
+(function () {
+    'use strict';
+    if (location.href.includes("qixin.com")) {
+        qixinEnhance();
+    } else if (location.href.includes("szjzy.org.cn")) {
+        szjzyEnhance();
+    } else if (location.href.includes("xib.smartapp.knowlegene.com")) {
+        xibEnhance();
+    }
 
 })();

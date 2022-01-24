@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.10
+// @version      0.11
 // @description  在启信宝公司页面插入复制公司名称、复制电话、复制地址、复制高管信息按钮
 // @author       EricKwok
-// @match        *://*.qixin.com/*
-// @match        *://www.szjzy.org.cn/member*
-// @match        *://xib.smartapp.knowlegene.com/marketing/*
+// @match        *.qixin.com/*
+// @match        www.szjzy.org.cn/member*
+// @match        xib.smartapp.knowlegene.com/marketing/*
+// @match        zjj.sz.gov.cn*
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js
 // @icon         https://www.qixin.com/favicon.ico
 // @run-at       document-end
@@ -71,59 +72,29 @@ function copyMe(str) {
 }
 
 /**
- * Add copy info button to page.
- * @param {string} companyName Company name which will be copid to clipboard when button clicked
- * @param {string} telephone Telephone number which will be copid to clipboard when button clicked
- * @param {string} address Company address which will be copid to clipboard when button clicked
- * @param {string} senior Senior executive of company which will be copid to clipboard when button clicked
+ * 在元素内注入复制按钮
+ * @param {HTMLElem} elem 要注入复制按钮的页面元素
+ * @param {String} text 复制到剪贴板的文本
+ * @param {String} className 复制按钮的自定义 className
+ * @param {String} style 复制按钮的自定义 style
+ * @param {String} injectAt 注入位置，可选的值为：beforebegin、afterbegin、beforeend、afterend
+ * @returns {Boolean} 如果执行完成则返回 true，否则返回 false
  */
-function addBtns(companyName, telephone, address, senior) {
-    if (arguments.length < 4) {
-        console.error("Arguments of function addBtns not match, should be exactly 4 args.");
-        errorAlert("Arguments of function addBtns not match, should be exactly 4 args.")
-        return;
+function addCopyBtn(elem, text, className = "", style = "", injectAt = "beforeend") {
+    if (!elem) {
+        return false;
     }
-    let companyCase;
-    if (location.href.includes("qixin.com/publicly"))
-        companyCase = 'publicy';
-    else if (location.href.includes("qixin.com/company/") && (!document.querySelector(".info-hk")))
-        companyCase = 'company';
-    else if (document.querySelector(".info-hk"))
-        companyCase = 'hk_company';
-    else
-        companyCase = 'default';
-    let _class = {
-        'publicy': 'head-tag font-12 inline-block isBlue m-l-10',
-        'company': 'head-tag font-12 inline-block isBlue m-l-10',
-        'hk_company': 'label label-yellow font-12',
-        'default': ''
-    };
-    let ids = ["copy_com", "copy_tel", "copy_add", "copy_sen"];
-    let items = ["公司名称", "电话", "地址", "高管信息"];
-    let _btnHtml = (companyCase === 'hk_company') ? "" : "<br>";
-    for (let i = 0; i < arguments.length; i++) {
-        if (arguments && arguments[i].length > 0) {
-            _btnHtml += `<a id="${ids[i]}" class="${_class[companyCase]}">复制${items[i]}</a>`;
-        }
-    }
-    if (document.querySelector(".app-head-basic"))
-        document.querySelector(".app-head-basic").querySelector(".claim-tag").insertAdjacentHTML("afterend", _btnHtml);
-    else if (document.querySelector(".company-name"))
-        document.querySelector(".company-name").insertAdjacentHTML("afterend", _btnHtml);
-    else if (document.querySelector(".title"))
-        document.querySelector(".title").insertAdjacentHTML("beforeend", _btnHtml)
-    for (let i = 0; i < arguments.length; i++) {
-        if (arguments[i].length > 0) {
-            let _args = arguments;
-            let _i = i;
-            document.getElementById(ids[_i]).onclick = function () {
-                copyMe(_args[_i]);
-                let originalText = document.getElementById(ids[_i]).innerText;
-                document.getElementById(ids[_i]).innerText = "✅复制成功！";
-                setTimeout(() => document.getElementById(ids[_i]).innerText = originalText, 1000);
-            }
-        }
-    }
+    let id = parseInt(Math.random() * 1000);
+    let copyBtn = ` <a id="btn${id}" data-clipboard-text="${text}" class="${className}" style="${style}">复制</a>`
+    elem.insertAdjacentHTML(injectAt, copyBtn);
+    let clipboard = new ClipboardJS(`#btn${id}`);
+    clipboard.on('success', function () {
+        document.querySelector(`#btn${id}`).innerText = "成功✅";
+        window.setTimeout(function () {
+            document.querySelector(`#btn${id}`).innerText = "复制";
+        }, 1000);
+    });
+    return true;
 }
 
 /**
@@ -201,7 +172,100 @@ function qixinEnhance() {
         // 删除开头或末尾的分隔符
         let commaAtBeginingOrEnd = /^\s*,|,\s*$/g;
 
-        if (location.href.includes("qixin.com/publicly/") || location.href.includes("qixin.com/company/")) {
+        if (location.href.includes("qixin.com/search")) {
+            window.setInterval(function () {
+                // 搜索结果页注入
+                document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > .company-title").forEach((elem) => {
+                    // 插入复制公司标题按钮
+                    if (!elem.innerText.match(/复制|✅/)) {
+                        addCopyBtn(elem, elem.innerText, "margin-l-0-3x font-14", "color:#1678F0;font-weight: normal;");
+                    }
+                });
+                document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > div:nth-child(4) > span:nth-child(1)").forEach((elem) => {
+                    // 插入复制公司邮箱按钮（当公司无邮箱信息时此栏显示的是电话，因此也需要处理电话的情况）
+                    if (!elem.innerText.match(/复制|✅/)) {
+                        let innerText = elem.innerText.replace("邮箱：", "").replace("电话：", "").replace("地址：", "");
+                        if (innerText !== "-") {
+                            addCopyBtn(elem, innerText);
+                        }
+                    }
+                })
+                document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > div:nth-child(4) > span:nth-child(2)").forEach((elem) => {
+                    // 插入复制公司电话按钮
+                    if (!elem.innerText.match(/复制|✅/)) {
+                        let innerText = elem.innerText.replace("电话：", "");
+                        if (innerText !== "-") {
+                            addCopyBtn(elem, innerText);
+                        }
+                    }
+                });
+                document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > div:nth-child(5) > span").forEach((elem) => {
+                    // 插入复制公司地址按钮
+                    if (!elem.innerText.match(/复制|✅/)) {
+                        let innerText = elem.innerText.replace("地图显示", "").replace("最新地址", "").replace("地址：", "");
+                        if (innerText !== "-") {
+                            addCopyBtn(elem.querySelector("a"), innerText, null, null, "beforebegin");
+                        }
+                    }
+                });
+            }, 1000);
+        } else if (location.href.includes("qixin.com/publicly/") || location.href.includes("qixin.com/company/")) {
+            // 公司详情页注入
+            /**
+             * Add copy info button to page.
+             * @param {string} companyName Company name which will be copid to clipboard when button clicked
+             * @param {string} telephone Telephone number which will be copid to clipboard when button clicked
+             * @param {string} address Company address which will be copid to clipboard when button clicked
+             * @param {string} senior Senior executive of company which will be copid to clipboard when button clicked
+             */
+            function addBtns(companyName, telephone, address, senior) {
+                if (arguments.length < 4) {
+                    console.error("Arguments of function addBtns not match, should be exactly 4 args.");
+                    errorAlert("Arguments of function addBtns not match, should be exactly 4 args.")
+                    return;
+                }
+                let companyCase;
+                if (location.href.includes("qixin.com/publicly"))
+                    companyCase = 'publicy';
+                else if (location.href.includes("qixin.com/company/") && (!document.querySelector(".info-hk")))
+                    companyCase = 'company';
+                else if (document.querySelector(".info-hk"))
+                    companyCase = 'hk_company';
+                else
+                    companyCase = 'default';
+                let _class = {
+                    'publicy': 'head-tag font-12 inline-block isBlue m-l-10',
+                    'company': 'head-tag font-12 inline-block isBlue m-l-10',
+                    'hk_company': 'label label-yellow font-12',
+                    'default': ''
+                };
+                let ids = ["copy_com", "copy_tel", "copy_add", "copy_sen"];
+                let items = ["公司名称", "电话", "地址", "高管信息"];
+                let _btnHtml = (companyCase === 'hk_company') ? "" : "<br>";
+                for (let i = 0; i < arguments.length; i++) {
+                    if (arguments && arguments[i].length > 0) {
+                        _btnHtml += `<a id="${ids[i]}" class="${_class[companyCase]}">复制${items[i]}</a>`;
+                    }
+                }
+                if (document.querySelector(".app-head-basic"))
+                    document.querySelector(".app-head-basic").querySelector(".claim-tag").insertAdjacentHTML("afterend", _btnHtml);
+                else if (document.querySelector(".company-name"))
+                    document.querySelector(".company-name").insertAdjacentHTML("afterend", _btnHtml);
+                else if (document.querySelector(".title"))
+                    document.querySelector(".title").insertAdjacentHTML("beforeend", _btnHtml)
+                for (let i = 0; i < arguments.length; i++) {
+                    if (arguments[i].length > 0) {
+                        let _args = arguments;
+                        let _i = i;
+                        document.getElementById(ids[_i]).onclick = function () {
+                            copyMe(_args[_i]);
+                            let originalText = document.getElementById(ids[_i]).innerText;
+                            document.getElementById(ids[_i]).innerText = "✅复制成功！";
+                            setTimeout(() => document.getElementById(ids[_i]).innerText = originalText, 1000);
+                        }
+                    }
+                }
+            }
             // 从「head」栏中读取
             if (document.querySelector(".phone-valid")) {
                 let telElem = document.querySelector(".phone-valid").parentElement.getElementsByClassName("span-info");
@@ -383,18 +447,6 @@ function xibEnhance() {
             }
         }, 100);
     } else if (location.href.includes("xib.smartapp.knowlegene.com/marketing/expand")) {
-        function addCopyBtn(elem, text) {
-            let id = parseInt(Math.random() * 1000);
-            let copyBtn = ` <a id="btn${id}" data-clipboard-text="${text}">复制</a>`
-            elem.insertAdjacentHTML("beforeend", copyBtn);
-            let clipboard = new ClipboardJS(`#btn${id}`);
-            clipboard.on('success', function () {
-                document.querySelector(`#btn${id}`).innerText = "成功✅";
-                window.setTimeout(function () {
-                    document.querySelector(`#btn${id}`).innerText = "复制";
-                }, 1000);
-            });
-        }
         let interval = window.setInterval(function () {
             let nameElem = document.querySelector("#knowlegene-marketing > div.exact-marketing-wrapper > div.main-content-box > div > div:nth-child(2) > div:nth-child(2) > table > tbody > tr:nth-child(1) > td:nth-child(2)");
             if (nameElem && nameElem.innerText !== "-") {
@@ -436,6 +488,19 @@ function xibEnhance() {
     }
 }
 
+function zjj_sz_enhance() {
+    window.setInterval(function () {
+        if (document.querySelector(".el-tabs__item.is-top.is-active")
+            && document.querySelector(".el-tabs__item.is-top.is-active").innerText.includes("房地产项目综合查询")) {
+            for (let elem of document.querySelectorAll("#updatepanel2 > div > div.fix > table > tbody > tr > td:nth-child(4)")) {
+                if (!elem.classList.includes("injected")) {
+                    elem.classList.add("injected");
+                }
+            }
+        }
+    }, 100)
+}
+
 (function () {
     'use strict';
     if (location.href.includes("qixin.com")) {
@@ -444,6 +509,8 @@ function xibEnhance() {
         szjzyEnhance();
     } else if (location.href.includes("xib.smartapp.knowlegene.com")) {
         xibEnhance();
+    } else if (location.href.includes("zjj.sz.gov.cn")) {
+        //zjj_sz_enhance();
     }
 
 })();

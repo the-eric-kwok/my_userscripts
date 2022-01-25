@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.11
+// @version      0.12
 // @description  在启信宝公司页面插入复制公司名称、复制电话、复制地址、复制高管信息按钮
 // @author       EricKwok
-// @match        *.qixin.com/*
-// @match        www.szjzy.org.cn/member*
-// @match        xib.smartapp.knowlegene.com/marketing/*
+// @match        *://www.qixin.com/*
+// @match        *://www.szjzy.org.cn/member*
+// @match        *://xib.smartapp.knowlegene.com/marketing/*
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js
 // @icon         https://www.qixin.com/favicon.ico
 // @run-at       document-end

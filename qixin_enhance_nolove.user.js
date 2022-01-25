@@ -7,7 +7,6 @@
 // @match        *.qixin.com/*
 // @match        www.szjzy.org.cn/member*
 // @match        xib.smartapp.knowlegene.com/marketing/*
-// @match        zjj.sz.gov.cn*
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js
 // @icon         https://www.qixin.com/favicon.ico
 // @run-at       document-end
@@ -488,19 +487,6 @@ function xibEnhance() {
     }
 }
 
-function zjj_sz_enhance() {
-    window.setInterval(function () {
-        if (document.querySelector(".el-tabs__item.is-top.is-active")
-            && document.querySelector(".el-tabs__item.is-top.is-active").innerText.includes("房地产项目综合查询")) {
-            for (let elem of document.querySelectorAll("#updatepanel2 > div > div.fix > table > tbody > tr > td:nth-child(4)")) {
-                if (!elem.classList.includes("injected")) {
-                    elem.classList.add("injected");
-                }
-            }
-        }
-    }, 100)
-}
-
 (function () {
     'use strict';
     if (location.href.includes("qixin.com")) {
@@ -509,8 +495,6 @@ function zjj_sz_enhance() {
         szjzyEnhance();
     } else if (location.href.includes("xib.smartapp.knowlegene.com")) {
         xibEnhance();
-    } else if (location.href.includes("zjj.sz.gov.cn")) {
-        //zjj_sz_enhance();
     }
 
 })();

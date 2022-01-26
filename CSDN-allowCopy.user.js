@@ -4,6 +4,7 @@
 // @version      0.6
 // @description  将“登录以复制”按钮更改为复制功能，去除 banner 广告
 // @author       EricKwok
+// @supportURL   https://github.com/the-eric-kwok/my_userscripts/issues
 // @match        https://*.csdn.net/*
 // @icon         https://g.csdnimg.cn/static/logo/favicon32.ico
 // @grant        none

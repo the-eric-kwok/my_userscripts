@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.10
+// @version      1.11
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*

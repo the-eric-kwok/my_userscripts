@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         启信宝增强
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.12
+// @version      0.13
 // @description  在启信宝公司页面插入复制公司名称、复制电话、复制地址、复制高管信息按钮
 // @author       EricKwok
 // @supportURL   https://github.com/the-eric-kwok/my_userscripts/issues
@@ -178,13 +178,13 @@ function qixinEnhance() {
                 document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > .company-title").forEach((elem) => {
                     // 插入复制公司标题按钮
                     if (!elem.innerText.match(/复制|✅/)) {
-                        addCopyBtn(elem, elem.innerText, "margin-l-0-3x font-14", "color:#1678F0;font-weight: normal;");
+                        addCopyBtn(elem, elem.innerText.trim(), "margin-l-0-3x font-14", "color:#1678F0;font-weight: normal;");
                     }
                 });
                 document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > div:nth-child(4) > span:nth-child(1)").forEach((elem) => {
                     // 插入复制公司邮箱按钮（当公司无邮箱信息时此栏显示的是电话，因此也需要处理电话的情况）
                     if (!elem.innerText.match(/复制|✅/)) {
-                        let innerText = elem.innerText.replace("邮箱：", "").replace("电话：", "").replace("地址：", "");
+                        let innerText = elem.innerText.replace("邮箱：", "").replace("电话：", "").replace("地址：", "").trim();
                         if (innerText !== "-") {
                             addCopyBtn(elem, innerText);
                         }
@@ -193,7 +193,7 @@ function qixinEnhance() {
                 document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > div:nth-child(4) > span:nth-child(2)").forEach((elem) => {
                     // 插入复制公司电话按钮
                     if (!elem.innerText.match(/复制|✅/)) {
-                        let innerText = elem.innerText.replace("电话：", "");
+                        let innerText = elem.innerText.replace("电话：", "").trim();
                         if (innerText !== "-") {
                             addCopyBtn(elem, innerText);
                         }
@@ -202,7 +202,7 @@ function qixinEnhance() {
                 document.querySelectorAll("div.company-item > div.col-2 > div.col-2-1 > div:nth-child(5) > span").forEach((elem) => {
                     // 插入复制公司地址按钮
                     if (!elem.innerText.match(/复制|✅/)) {
-                        let innerText = elem.innerText.replace("地图显示", "").replace("最新地址", "").replace("地址：", "");
+                        let innerText = elem.innerText.replace("地图显示", "").replace("最新地址", "").replace("地址：", "").trim();
                         if (innerText !== "-") {
                             addCopyBtn(elem.querySelector("a"), innerText, null, null, "beforebegin");
                         }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树考试搜题、共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      1.3.1
+// @version      1.3.2
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、自动搜题、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/my_userscripts
@@ -13,11 +13,11 @@
 // @connect      api.muketool.com
 // @require      https://greasyfork.org/scripts/28536-gm-config/code/GM_config.js
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_deleteValue
-// @grant        GM_xmlhttpRequest
-// @grant        GM_setClipboard
+// @grant        GM.getValue
+// @grant        GM.setValue
+// @grant        GM.deleteValue
+// @grant        GM.xmlhttpRequest
+// @grant        GM.setClipboard
 // @run-at       document-end
 // @icon         https://assets.zhihuishu.com/icon/favicon.ico?v=20210605
 // @license      GPLv3
@@ -508,8 +508,8 @@ function copyMe(str) {
 
     }
 
-    if (GM_setClipboard) {
-        GM_setClipboard(str);
+    if (GM.setClipboard) {
+        GM.setClipboard(str);
     } else if (navigator.clipboard && window.isSecureContext) {
         console.log("正在使用 navigator clipboard api 进行复制操作");
         navigator.clipboard.writeText(str)
@@ -608,7 +608,7 @@ async function insertAnswer() {
 function findAnswer(question) {
     function requestAnswer(apiUrl) {
         return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
+            GM.xmlhttpRequest({
                 method: 'POST',
                 url: apiUrl,
                 headers: {
@@ -943,3 +943,4 @@ function configHotkeyBinding() {
     })
     window.onload = main;
 })();
+

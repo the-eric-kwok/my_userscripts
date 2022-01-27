@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.8
+// @version      1.9
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
@@ -12,10 +12,10 @@
 // @connect      translate.google.com
 // @connect      api.microsofttranslator.com
 // @connect      api.fanyi.baidu.com
-// @grant        GM_xmlhttpRequest
-// @grant        GM_setClipboard
-// @grant        GM_setValue
-// @grant        GM_getValue
+// @grant        GM.xmlhttpRequest
+// @grant        GM.setClipboard
+// @grant        GM.setValue
+// @grant        GM.getValue
 // @run-at       document-end
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
@@ -69,7 +69,7 @@ async function sleep(ms = 10) {
 
 async function getRequest(url, headers = {}, timeout = 5000) {
     return new Promise(function (resolve, reject) {
-        GM_xmlhttpRequest({
+        GM.xmlhttpRequest({
             method: 'GET',
             url: url,
             headers: headers,
@@ -129,8 +129,8 @@ function copyMe(str) {
 
     }
 
-    if (GM_setClipboard) {
-        GM_setClipboard(str);
+    if (GM.setClipboard) {
+        GM.setClipboard(str);
     } else if (navigator.clipboard && window.isSecureContext) {
         console.log("正在使用 navigator clipboard api 进行复制操作");
         navigator.clipboard.writeText(str)
@@ -149,7 +149,7 @@ function copyMe(str) {
  */
 async function getToken() {
     let fallbackToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJvcGVuX2lkIjoidHV4NkNCQVc4aGRrcnFZdzc5SEpEWDF2aTR5Z2ptcDUiLCJuYW1lIjoiIiwiZW1haWwiOiIiLCJhZG1pbmlzdHJhdG9yIjoiZmFsc2UiLCJleHAiOjE5MDI5NzAxNTcwMDAsImlzcyI6IlI0aG03RmxQOFdvS0xaMUNmTkllIiwiYXVkIjoiZWR4LnVuaXB1cy5jbiJ9.CwuQmnSmIuts3hHAMf9lT954rKHXUNkps-PfRJp0KnU";
-    let oldToken = GM_getValue("token");
+    let oldToken = GM.getValue("token");
     if (oldToken && new Date(oldToken.expireWhen).getTime() > new Date().getTime()) {
         return oldToken.token;
     }
@@ -177,7 +177,7 @@ async function getToken() {
         token: token,
         expireWhen: expireWhen,
     }
-    GM_setValue("token", tokenObj);
+    GM.setValue("token", tokenObj);
     return token;
 }
 

@@ -16,7 +16,7 @@
 // @grant        GM.setClipboard
 // @grant        GM.setValue
 // @grant        GM.getValue
-// @run-at       document-idle
+// @run-at       document-end
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
 // @license      MIT
@@ -149,10 +149,12 @@ function copyMe(str) {
  */
 async function getToken() {
     let fallbackToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJvcGVuX2lkIjoidHV4NkNCQVc4aGRrcnFZdzc5SEpEWDF2aTR5Z2ptcDUiLCJuYW1lIjoiIiwiZW1haWwiOiIiLCJhZG1pbmlzdHJhdG9yIjoiZmFsc2UiLCJleHAiOjE5MDI5NzAxNTcwMDAsImlzcyI6IlI0aG03RmxQOFdvS0xaMUNmTkllIiwiYXVkIjoiZWR4LnVuaXB1cy5jbiJ9.CwuQmnSmIuts3hHAMf9lT954rKHXUNkps-PfRJp0KnU";
-    let oldToken = GM.getValue("token");
+    let oldToken = await GM.getValue("token");
     if (oldToken && new Date(oldToken.expireWhen).getTime() > new Date().getTime()) {
+        console.info("【U校园助手】正在使用旧的token");
         return oldToken.token;
     }
+    console.info("【U校园助手】正在获取新的的token");
     let url = "https://u.unipus.cn/user/data/getToken";
     let xhr = await getRequest(url).catch((err) => {
         console.error(err);
@@ -497,22 +499,6 @@ function main() {
 
 (function () {
     'use strict';
-    window.addEventListener('pjax:success', function () {
-        // 将 main 函数绑定到 pjax 监听器上
-        console.log("pjax success");
-        main();
-    });
-    window.addEventListener('pushState', function (e) {
-        console.log('change pushState');
-        main();
-    });
-    window.addEventListener('replaceState', function (e) {
-        console.log('change replaceState');
-        main();
-    });
-    window.addEventListener('hashchange', function (event) {
-        console.log(event, 'hashchange');
-        //main();
-    })
     main();
 })();
+

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树考试搜题、共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      1.3.2
+// @version      1.3.3
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、自动搜题、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/my_userscripts
@@ -16,9 +16,9 @@
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
-// @grant        GM.xmlhttpRequest
+// @grant        GM.xmlHttpRequest
 // @grant        GM.setClipboard
-// @run-at       document-end
+// @run-at       document-idle
 // @icon         https://assets.zhihuishu.com/icon/favicon.ico?v=20210605
 // @license      GPLv3
 // ==/UserScript==
@@ -608,7 +608,7 @@ async function insertAnswer() {
 function findAnswer(question) {
     function requestAnswer(apiUrl) {
         return new Promise((resolve, reject) => {
-            GM.xmlhttpRequest({
+            GM.xmlHttpRequest({
                 method: 'POST',
                 url: apiUrl,
                 headers: {
@@ -919,7 +919,7 @@ function configHotkeyBinding() {
     function main() {
         GM_config.init(myConfig);  //使用 myConfig 初始化 GM_config 设置面板
         init();
-        oneShot();
+        window.setTimeout(oneShot, 1000);
         window.setInterval(mainLoop, (timeInterval * 1000));
         log("启动成功");
     }

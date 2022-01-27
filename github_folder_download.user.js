@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         GitHub 文件夹下载
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.2
+// @version      0.3
 // @description  为 GitHub 文件夹增加一个下载按钮，可以方便地下载某个文件夹
 // @author       EricKwok
 // @supportURL   https://github.com/the-eric-kwok/my_userscripts/issues
 // @match        *://github.com/*
 // @icon         https://i.loli.net/2021/03/30/ULV9XunaHesqGIR.png
+// @run-at       document-idle
 // @grant        none
 // @license      GPLv3
 // ==/UserScript==

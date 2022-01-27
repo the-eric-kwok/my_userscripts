@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.9
+// @version      1.10
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
@@ -12,11 +12,11 @@
 // @connect      translate.google.com
 // @connect      api.microsofttranslator.com
 // @connect      api.fanyi.baidu.com
-// @grant        GM.xmlhttpRequest
+// @grant        GM.xmlHttpRequest
 // @grant        GM.setClipboard
 // @grant        GM.setValue
 // @grant        GM.getValue
-// @run-at       document-end
+// @run-at       document-idle
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
 // @license      MIT
@@ -69,7 +69,7 @@ async function sleep(ms = 10) {
 
 async function getRequest(url, headers = {}, timeout = 5000) {
     return new Promise(function (resolve, reject) {
-        GM.xmlhttpRequest({
+        GM.xmlHttpRequest({
             method: 'GET',
             url: url,
             headers: headers,

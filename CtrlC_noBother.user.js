@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         别打扰我复制粘贴
-// @namespace    http://tampermonkey.net/
-// @version      0.1
+// @namespace    https://github.com/the-eric-kwok/my_userscripts
+// @version      0.2
 // @description  阻止网站在你复制内容时弹出弹框或阻止复制
 // @include      *
 // @author       EricKwok

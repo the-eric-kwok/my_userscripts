@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         国际版B站跳转回中国版
+// @name         国际版 B 站回家
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
 // @version      0.1
 // @description  外国搜索引擎（如Google）上抓取到的B站视频链接为国际版，不展示评论区等内容，使用此脚本将为你自动跳转回国内版本的B站

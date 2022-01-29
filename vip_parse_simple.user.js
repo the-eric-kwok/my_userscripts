@@ -4,7 +4,7 @@
 // @antifeature  此脚本会导航用户到第三方解析站点进行解析，第三方解析站点可能会包含广告。
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
 // @grant        none
-// @version      1.0
+// @version      1.2
 // @author       EricKwok
 // @run-at       document-idle
 // @homepage     https://github.com/the-eric-kwok/my_userscripts
@@ -17,6 +17,7 @@
 // @include      *://*.iqiyi.com/v_*
 // @include      *://*.iqiyi.com/w_*
 // @include      *://*.iqiyi.com/a_*
+// @include      *://m.iqiyi.com*
 // @include      *://*.iq.com/play/*
 // @include      *://*.le.com/ptv/vplay/*
 // @include      *://m.le.com/vplay*
@@ -31,6 +32,7 @@
 // @exclude      *://*.xixicai.top/*
 // @exclude      *://17kyun.com/*
 // ==/UserScript==
+
 
 /**
  * 在元素内注入超链接
@@ -48,9 +50,30 @@ function addSuperLink(elem, title, href, className = "", style = "", injectAt = 
         return false;
     }
     let id = parseInt(Math.random() * 1000);
-    let superLink = `${spaceLeading ? "&nbsp;&nbsp;" : ""}<a id="btn${id}" href="${href}" target="_blank" class="${className}" style="${style}">${title}</a>${spaceLeading ? "" : "&nbsp;&nbsp;"}`
+    let superLink = `<a id="btn${id}" href="${href}" target="_blank" class="erickwok_vip_parse ${className}" style="${style}">${spaceLeading ? "&nbsp;&nbsp;" : ""}${title}${spaceLeading ? "" : "&nbsp;&nbsp;"}</a>`
     elem.insertAdjacentHTML(injectAt, superLink);
     return true;
+}
+
+/** 移除所有脚本注入的元素 */
+function removeAllInjectedElem() {
+    document.querySelectorAll(".erickwok_vip_parse").forEach(elem => elem.remove());
+}
+
+/** 将 pushState、replaceState 包裹在自定义的方法中，让它们被调用时发出 pushState、replaceState 事件。 */
+function injectPushReplaceStateTrigger() {
+    var _wr = function (type) {
+        var orig = history[type];
+        return function () {
+            var rv = orig.apply(this, arguments);
+            var e = new Event(type);
+            e.arguments = arguments;
+            window.dispatchEvent(e);
+            return rv;
+        };
+    };
+    history.pushState = _wr('pushState');
+    history.replaceState = _wr('replaceState');
 }
 
 let removeAdFunctionMap = {
@@ -65,14 +88,18 @@ let removeAdFunctionMap = {
         document.querySelectorAll(".at-app-banner--button").forEach(elem => elem.remove());
     },
     vqq: function () {
+        if (document.querySelector(".mod_vip_popup > a.btn_close")) document.querySelector(".mod_vip_popup > a.btn_close").click();
         document.querySelectorAll(".mod_vip_sidebar").forEach(elem => elem.remove());
         document.querySelectorAll(".ft_cell_vcoin").forEach(elem => elem.remove());
         document.querySelectorAll(".ft_cell_feedback").forEach(elem => elem.remove());
         document.querySelectorAll(".btn_search_hot").forEach(elem => elem.remove());
     },
     iqiyim: function () {
-        document.querySelector(".link-continue").click();
-        document.querySelectorAll(".m-iqylink-guide").forEach(elem => elem.remove());
+        if (document.querySelector(".iqyGuide-btn > .link-continue")) document.querySelector(".iqyGuide-btn > .link-continue").click();
+        document.querySelectorAll(".c-guide-img").forEach(elem => elem.remove());
+        document.querySelectorAll("section.ChannelHomeBanner_hbd_eiF93").forEach(elem => elem.remove());
+        document.querySelectorAll(".hotWords-wrap").forEach(elem => elem.remove());
+        document.querySelectorAll(".m-videoUser-spacing").forEach(elem => elem.remove());
     },
     iqiyi: function () {
         document.querySelectorAll(".qy-scroll-anchor").forEach(elem => elem.remove());
@@ -83,6 +110,7 @@ let removeAdFunctionMap = {
         document.querySelectorAll(".Corner-container").forEach(elem => elem.remove());
         document.querySelectorAll(".h5-detail-guide").forEach(elem => elem.remove());
         document.querySelectorAll(".h5-detail-vip-guide").forEach(elem => elem.remove());
+        document.querySelectorAll(".smartBannerBtn").forEach(elem => elem.remove());
     },
     youku: function () {
         document.querySelectorAll(".qr-wrap").forEach(elem => elem.remove());
@@ -146,76 +174,91 @@ let injectFunctionMap = {
     // 此处列明每个站点如何注入一个超链接，然后交由主函数内的循环来遍历和注入
     b23m: function (url, title) {
         let elem = document.querySelector(".ep-info-pre");
-        addSuperLink(elem, title, url, null, "font-size:14px;color:#fb7299");
+        addSuperLink(elem, title, url, undefined, "font-size:14px;color:#fb7299");
     },
     b23: function (url, title) {
         let playerElem = document.querySelector(".media-info");
-        addSuperLink(playerElem, title, url, null, "font-size:14px;color:#fb7299", "beforebegin");
+        addSuperLink(playerElem, title, url, undefined, "font-size:14px;color:#fb7299", "beforebegin");
     },
     vqqm: function (url, title) {
         let elem = document.querySelector(".video_title");
-        addSuperLink(elem, title, url, null, null, "beforebegin");
+        addSuperLink(elem, title, url, undefined, undefined, "beforebegin");
     },
     vqq: function (url, title) {
         let elem = document.querySelector(".video_base._base");
-        addSuperLink(elem, title, url, null, null, "beforebegin");
+        addSuperLink(elem, title, url, undefined, undefined, "beforebegin");
     },
     iqiyim: function (url, title) {
         let elem = document.querySelector(".videoInfoFold-data");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforebegin");
+        addSuperLink(elem, title, url, undefined, "font-size:14px;", "beforebegin");
     },
     iqiyi: function (url, title) {
         let elem = document.querySelector(".qy-player-title");
-        addSuperLink(elem, title, url, null, "color: hsla(0,0%,100%,.7);", "beforebegin");
+        addSuperLink(elem, title, url, undefined, "color: hsla(0,0%,100%,.7);", "beforebegin");
     },
     youkum: function (url, title) {
         let elem = document.querySelector(".brief-info-box");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforebegin");
+        addSuperLink(elem, title, url, undefined, "font-size:14px;color:#999;", "beforebegin");
     },
     youku: function (url, title) {
         let elem = document.querySelector("#left-title-content-wrap");
-        addSuperLink(elem, title, url, null, "font-size:14px;");
+        addSuperLink(elem, title, url, undefined, "font-size:14px;");
     },
     lem: function (url, title) {
         let elem = document.querySelector(".j-videofrom");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforeend", true);
+        addSuperLink(elem, title, url, undefined, "font-size:14px;", "beforeend", true);
     },
     le: function (url, title) {
         let elem = document.querySelector(".briefIntro_tit");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforebegin");
+        addSuperLink(elem, title, url, undefined, "font-size:14px;", "beforebegin");
     },
     mgtvm: function (url, title) {
         let elem = document.querySelector(".hd");
-        addSuperLink(elem, title, url, null, "font-size:14px;color:white;", "beforebegin", true);
+        addSuperLink(elem, title, url, undefined, "font-size:14px;color:white;", "beforebegin", true);
     },
     mgtv: function (url, title) {
         let elem = document.querySelector(".title");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforeend", true);
+        addSuperLink(elem, title, url, undefined, "font-size:14px;", "beforeend", true);
     },
     sohutvm: function (url, title) {
         let elem = document.querySelector(".twinfo_iconwrap");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforebegin");
+        addSuperLink(elem, title, url, undefined, "font-size:14px;", "beforebegin");
     },
     sohutv: function (url, title) {
         let elem = document.querySelector(".showname");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforeend", true);
+        addSuperLink(elem, title, url, undefined, "font-size:14px;", "beforeend", true);
     },
     sohufilm: function (url, title) {
         let elem = document.querySelector(".player-top-info-name > h2");
-        addSuperLink(elem, title, url, null, "font-size:14px;color:white;", "beforeend", true);
+        addSuperLink(elem, title, url, undefined, "font-size:14px;color:white;", "beforeend", true);
     },
     pptvm: function (url, title) {
         let elem = document.querySelector(".video_title");
-        addSuperLink(elem, title, url, null, "font-size:14px;", "beforebegin");
+        addSuperLink(elem, title, url, undefined, "font-size:14px;", "beforebegin");
     },
     pptv: function (url, title) {
         let elem = document.querySelector(".programinfo > h1");
-        addSuperLink(elem, title, url, null, "font-size:14px;color:white;", "beforeend", true);
+        addSuperLink(elem, title, url, undefined, "font-size:14px;color:white;", "beforeend", true);
     },
 };
 
 (function () {
     'use scrict';
+    injectPushReplaceStateTrigger();
+    window.addEventListener('replaceState', function (e) {
+        console.log('【视频解析】replaceState 被触发');
+    });
+    window.addEventListener('pushState', function (e) {
+        console.log('【视频解析】pushState 被触发');
+        removeAllInjectedElem();
+        let videoUrl = location.href;
+        window.setTimeout(function () {
+            for (let i = 0; i < juheUrlList.length; i++) {
+                let url = juheUrlList[i];
+                injectFunctionMap[site](url + videoUrl, ` 聚合解析 ${i + 1} `)
+            }
+        }, 3000);
+    });
     let juheUrlList = [
         "https://www.eggvod.cn/jxjx.php?lrspm=27188611&zhm_jx=",
         "https://www.xixicai.top/mov/s/?sv=3&url=",

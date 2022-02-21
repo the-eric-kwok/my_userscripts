@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.11
+// @version      1.12
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
@@ -12,7 +12,7 @@
 // @connect      translate.google.com
 // @connect      api.microsofttranslator.com
 // @connect      api.fanyi.baidu.com
-// @grant        GM.xmlHttpRequest
+// @grant        GM_xmlhttpRequest
 // @grant        GM.setClipboard
 // @grant        GM.setValue
 // @grant        GM.getValue
@@ -69,7 +69,10 @@ async function sleep(ms = 10) {
 
 async function getRequest(url, headers = {}, timeout = 5000) {
     return new Promise(function (resolve, reject) {
-        GM.xmlHttpRequest({
+        // 由于 GM.xmlHttpRequest 默认不携带浏览器 cookie
+        // 且 Grease Monkey 没有提供获取 HTTP-Only 的 cookie 的 API
+        // 所以只能使用旧的 GM_xmlhttpRequest 来发起请求，否则会要求 SSO 登录
+        GM_xmlhttpRequest({
             method: 'GET',
             url: url,
             headers: headers,
@@ -168,6 +171,17 @@ async function getToken() {
             layer.alert(`获取 Token 失败，请刷新重试`);
         });
         return fallbackToken;
+    }
+    if (!xhr.responseText.startsWith("{")) {
+        console.error("获取 Token 时的返回值：", xhr.responseText);
+        if (xhr.responseText.includes("登录")) {
+            layui.use("layer", function () {
+                layer.alert("获取 Token 失败，请尝试重新登录");
+            });
+            return null;
+        }
+        alert(`获取 Token 失败，以下是 xhr 返回值：\n${xhr.responseText}`);
+        return null;
     }
     let obj = JSON.parse(xhr.responseText);
     if (!obj || !obj.token)
@@ -501,4 +515,5 @@ function main() {
     'use strict';
     main();
 })();
+
 

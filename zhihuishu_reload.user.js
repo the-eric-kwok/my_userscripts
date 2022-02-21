@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Reload]智慧树考试搜题、共享课挂机刷课助手
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      1.3.3
+// @version      1.3.4
 // @description  智慧树共享课刷课、跳过弹题、自动换集、自动1.5倍速、自动静音、自动标清、自动搜题、解除考试复制封印及一键复制题目到剪贴板
 // @author       EricKwok, C选项_沉默
 // @homepage     https://github.com/the-eric-kwok/my_userscripts
@@ -119,7 +119,12 @@ let myConfig = {
         'autoStopTime': {
             'label': '多少分钟后停止播放',
             'type': 'int',
-            'default': '30'
+            'default': 30
+        },
+        'timeInterval': {
+            'label': '主循环间隔时间（秒）',
+            'type': 'int',
+            'default': 1
         }
     },
     'events': {
@@ -151,15 +156,14 @@ let myConfig = {
             myConfigState = false;
         }
     },
-    'css': [
-        '#MyConfig { background: #F9F9F9; }',
-        '#MyConfig .saveclose_buttons { font-size: 14px; background: #3d84ff; border-radius: 14px; line-height: 24px; width: 82px; height: 28px; color: #FFF; border: none; cursor: pointer; }',
-        '#MyConfig .field_label { font-size: 14px; font-weight: bold; margin-right: 6px; }',
-        '#MyConfig .radio_label { font-size: 14px; }',
-        "#MyConfig .config_header { margin: 20px; }",
-        '#MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 75px; }',
-        '#MyConfig_wrapper { padding: 0 20px }',
-    ].join('\n') + '\n'
+    'css': `
+        #MyConfig { background: #F9F9F9; }
+        #MyConfig .saveclose_buttons { font-size: 14px; background: #3d84ff; border-radius: 14px; line-height: 24px; width: 82px; height: 28px; color: #FFF; border: none; cursor: pointer; }
+        #MyConfig .field_label { font-size: 14px; font-weight: bold; margin-right: 6px; }
+        #MyConfig .radio_label { font-size: 14px; }
+        #MyConfig .config_header { margin: 20px; }
+        #MyConfig_buttons_holder { color: #000; text-align: right; margin-top: 75px; }
+        #MyConfig_wrapper { padding: 0 20px }`,
 }
 
 /**
@@ -212,6 +216,7 @@ function init() {
     autoPlayNext = GM_config.get("autoPlayNext");
     autoStop = GM_config.get("autoStop");
     autoStopTime = GM_config.get("autoStopTime");
+    timeInterval = GM_config.get("timeInterval");
 }
 
 /**
@@ -351,23 +356,25 @@ async function closePopUpTest() {
         //关闭出现的检测题
         let topic_item = $('.topic-item');
         let guess_answer = parseInt(Math.random() * topic_item.length);
+        //随机点击一个选项
         topic_item[guess_answer].click();
         await sleep(1000);
         let guess_char = 'ABCD'[guess_answer];
-        //随机点击一个选项
         let answer = $('.answer').children().text();
         //选出正确答案
-        if (answer.indexOf('A') !== -1 && answer.indexOf(guess_char) === -1) {
-            topic_item[0].click();
-        }
-        else if (answer.indexOf('B') !== -1 && answer.indexOf(guess_char) === -1) {
-            topic_item[1].click();
-        }
-        else if (answer.indexOf('C') !== -1 && answer.indexOf(guess_char) === -1) {
-            topic_item[2].click();
-        }
-        else if (answer.indexOf('D') !== -1 && answer.indexOf(guess_char) === -1) {
-            topic_item[3].click();
+        if (!answer.includes(guess_char)) {
+            if (answer.includes('A')) {
+                topic_item[0].click();
+            }
+            else if (answer.includes('B')) {
+                topic_item[1].click();
+            }
+            else if (answer.includes('C')) {
+                topic_item[2].click();
+            }
+            else if (answer.includes('D')) {
+                topic_item[3].click();
+            }
         }
         await sleep(1000);
         pop_up.find('div.btn').click();
@@ -843,7 +850,7 @@ function configHotkeyBinding() {
         }
     }
 }
-
+var mainInterval;
 (function () {
     'use strict';
     /**
@@ -920,20 +927,22 @@ function configHotkeyBinding() {
         GM_config.init(myConfig);  //使用 myConfig 初始化 GM_config 设置面板
         init();
         window.setTimeout(oneShot, 1000);
-        window.setInterval(mainLoop, (timeInterval * 1000));
+        mainInterval = window.setInterval(mainLoop, (timeInterval * 1000));
         log("启动成功");
     }
 
     window.addEventListener('pjax:success', function () {
-        // 将 main 函数绑定到 pjax 监听器上
+        if (mainInterval) window.clearInterval(mainInterval);
         console.log("pjax success");
         main();
     });
     window.addEventListener('pushState', function (e) {
+        if (mainInterval) window.clearInterval(mainInterval);
         console.log('change pushState');
         main();
     });
     window.addEventListener('replaceState', function (e) {
+        if (mainInterval) window.clearInterval(mainInterval);
         console.log('change replaceState');
         main();
     });

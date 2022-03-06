@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.12
+// @version      1.13
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
@@ -19,6 +19,7 @@
 // @run-at       document-end
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
+// @require      https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js
 // @license      MIT
 // ==/UserScript==
 
@@ -208,9 +209,8 @@ function main() {
         }, 100);
     }
     if (window.location.href.includes("ucontent.unipus.cn")) {
-        $.getScript("https://cdn.staticaly.com/gh/placemarker/jQuery-MD5/master/jquery.md5.js");
         $('head').append('<link href="https://lib.baomitu.com/layui/2.6.8/css/layui.css" rel="stylesheet" type="text/css" />');
-        $.getScript("https://lib.baomitu.com/layui/2.6.8/layui.js", function (data, status, jqxhr) {
+        $.getScript("https://cdn.bootcdn.net/ajax/libs/layui/2.6.8/layui.js", function (data, status, jqxhr) {
             layui.use('element', function () {
                 let element = layui.element;
             });
@@ -229,7 +229,7 @@ function main() {
                 await sleep(300);
                 document.querySelector(".audio--aplayer-play-3oL9n").click();
             }
-        }, 100);
+        }, 500);
 
         function show() {
             layer.open({

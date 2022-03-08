@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.13
+// @version      1.14
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
@@ -17,9 +17,9 @@
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @run-at       document-end
-// @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js
+// @require      https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js
+// @require      https://cdn.jsdelivr.net/npm/blueimp-md5@2.19.0/js/md5.min.js
 // @license      MIT
 // ==/UserScript==
 
@@ -210,7 +210,7 @@ function main() {
     }
     if (window.location.href.includes("ucontent.unipus.cn")) {
         $('head').append('<link href="https://lib.baomitu.com/layui/2.6.8/css/layui.css" rel="stylesheet" type="text/css" />');
-        $.getScript("https://cdn.bootcdn.net/ajax/libs/layui/2.6.8/layui.js", function (data, status, jqxhr) {
+        $.getScript("https://cdn.jsdelivr.net/npm/layui@2.6.8/dist/layui.min.js", function (data, status, jqxhr) {
             layui.use('element', function () {
                 let element = layui.element;
             });
@@ -220,13 +220,20 @@ function main() {
         });
 
         let autoClickPlay = window.setInterval(async function () {
-            if (document.querySelector(".audio--aplayer-mute-2VMS7")) {
+            if (
+                document.querySelector(".audio--aplayer-mute-2VMS7") &&
+                document.querySelector(".audio--aplayer-rate-ms-ZWyM6.audio--aplayer-rate-m-aH2Eu") &&
+                document.querySelector(".audio--aplayer-play-3oL9n")
+            ) {
                 window.clearInterval(autoClickPlay);
                 await sleep(500);
+                // 点击倍速
                 document.querySelector(".audio--aplayer-rate-ms-ZWyM6.audio--aplayer-rate-m-aH2Eu").querySelectorAll("span")[2].click();
                 await sleep(300);
+                // 点击静音
                 document.querySelector(".audio--aplayer-mute-2VMS7").click();
                 await sleep(300);
+                // 点击播放
                 document.querySelector(".audio--aplayer-play-3oL9n").click();
             }
         }, 500);

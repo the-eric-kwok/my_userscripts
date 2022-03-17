@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.16
+// @version      1.17
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
@@ -583,7 +583,7 @@ async function showanswer() {
         $("#content>table>tbody").prepend($(
             `<tr class="layui-bg"><td><b>无需在此面板中复制，点击题目中的空，直接粘贴即可。</b></td></tr>`
         ))
-        answers.forEach((answer) => {
+        answers.forEach((answer, index) => {
             let answerId = randomString(5);
             let btnId = randomString(5);
             let el = `

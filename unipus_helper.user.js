@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         U校园unipus英语网课作业答案显示(不支持单元测试)
 // @namespace    https://greasyfork.org
-// @version      1.17
+// @version      1.18
 // @description  小窗口显示U校园板块测试答案
 // @icon         https://ucontent.unipus.cn/favicon.ico
 // @match        *://ucontent.unipus.cn/_pc_default/pc.html?*
@@ -358,9 +358,12 @@ async function showanswer() {
     let obj = JSON.parse(xhr.responseText) || {};
     if (!obj.content) {
         suggestFeedback("U校园返回的内容中不包含'content'字段，检查api是否改变");
+        return;
     }
     // 对 api 返回的 content 进行解密
     var plainContent = decryptContent(obj) || {};
+
+    console.log(plainContent);
 
     let questions = {};
     for (let key in plainContent) {
@@ -530,7 +533,7 @@ async function showanswer() {
                 });
             } else {
                 let answers = questions[quesNo].content.questions.map(
-                    item => item.analysis.html.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, ""));
+                    question => question.analysis.html.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, ""));
                 answers.forEach((answer, index) => {
                     let answerId = randomString(5);
                     let btnId = randomString(5);
@@ -548,7 +551,7 @@ async function showanswer() {
             }
         } else {
             let answers = questions[quesNo].content.questions.map(
-                item.analysis.html.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, ""));
+                question => question.analysis.html.replace(/<.*?>/g, "").replace(/\d\.\s?(&nbsp;)?/g, ""));
             answers.forEach((answer, index) => {
                 let answerId = randomString(5);
                 let btnId = randomString(5);
@@ -579,7 +582,7 @@ async function showanswer() {
     } else if (questions[quesNo].key.includes(":bankedcloze")) {
         // 十五选十
         let answers = questions[quesNo].content.questions.map(
-            item => item.answer);
+            question => question.answer);
         $("#content>table>tbody").prepend($(
             `<tr class="layui-bg"><td><b>无需在此面板中复制，点击题目中的空，直接粘贴即可。</b></td></tr>`
         ))

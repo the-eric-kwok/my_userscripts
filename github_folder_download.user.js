@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitHub 文件夹下载
 // @namespace    https://github.com/the-eric-kwok/my_userscripts
-// @version      0.5
+// @version      0.6
 // @description  为 GitHub 文件夹增加一个下载按钮，可以方便地下载某个文件夹
 // @author       EricKwok
 // @supportURL   https://github.com/the-eric-kwok/my_userscripts/issues
@@ -113,8 +113,32 @@ function main() {
         // 监听窗口大小改变
         main();
     }
+    let oldPushState = history.pushState;
+    history.pushState = function pushState() {
+        let ret = oldPushState.apply(this, arguments);
+        window.dispatchEvent(new Event('pushstate'));
+        window.dispatchEvent(new Event('locationchange'));
+        return ret;
+    };
+
+    let oldReplaceState = history.replaceState;
+    history.replaceState = function replaceState() {
+        let ret = oldReplaceState.apply(this, arguments);
+        window.dispatchEvent(new Event('replacestate'));
+        window.dispatchEvent(new Event('locationchange'));
+        return ret;
+    };
+
+    window.addEventListener('popstate', () => {
+        window.dispatchEvent(new Event('locationchange'));
+    });
+  
     document.addEventListener('pjax:success', function () {
         // 由于 GitHub 使用 pjax 而不是页面跳转的方式在仓库内导航，因此将 main 函数绑定到 pjax 监听器上
+        window.dispatchEvent(new Event('locationchange'));
+    });
+    window.addEventListener('locationchange', function () {
+        console.log('locationchange!');
         main();
     });
     main();
